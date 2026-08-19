@@ -20,7 +20,7 @@ namespace DenisPavlenko.Project.Architecture
 		{
 			try
 			{
-				await _sceneFlow.ChangeSceneAsync(SceneIds.Loading);
+				await _sceneFlow.ChangeSceneAsync(SceneIds.Game);
 			}
 			catch (Exception exception)
 			{
