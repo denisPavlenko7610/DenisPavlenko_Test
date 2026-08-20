@@ -5,7 +5,6 @@ using DenisPavlenko.Game.Core;
 using DenisPavlenko.Game.UI;
 using UnityTemplates.Attributes;
 using UnityTemplates.Foundation;
-using UnityTemplates.Haptics;
 using UnityTemplates.SceneFlow;
 
 namespace DenisPavlenko.Game
@@ -33,7 +32,6 @@ namespace DenisPavlenko.Game
 		private readonly List<ObstacleView> _obstacleViews = new();
 		private GameSession _session;
 		private bool _finished;
-		private bool _doorHapticPlayed;
 
 		private void Start()
 		{
@@ -70,9 +68,9 @@ namespace DenisPavlenko.Game
 			switch (_session.Phase)
 			{
 				case GamePhase.Idle:
-					if (_input.PressedThisFrame && _session.BeginCharge())
+					if (_input.PressedThisFrame)
 					{
-						Haptics.Play(HapticPreset.Selection);
+						_session.BeginCharge();
 					}
 					break;
 
@@ -84,11 +82,7 @@ namespace DenisPavlenko.Game
 					}
 					else
 					{
-						if (_session.ReleaseShot())
-						{
-							Haptics.Play(HapticPreset.LightImpact);
-						}
-						else
+						if (!_session.ReleaseShot())
 						{
 							_shot.Hide();
 						}
@@ -130,12 +124,6 @@ namespace DenisPavlenko.Game
 			float doorProgress = 1f - Mathf.Abs(targetZ - _session.PlayerZ) / _config.DoorOpenDistance;
 			_door.SetProgress(doorProgress);
 
-			if (doorProgress > 0f && !_doorHapticPlayed)
-			{
-				_doorHapticPlayed = true;
-				Haptics.Play(HapticPreset.Selection);
-			}
-
 			Vector3 cameraPosition = new(-_config.CameraSideOffset, _config.CameraHeight, _session.PlayerZ - _config.CameraBackOffset);
 			_camera.transform.position = cameraPosition;
 			_camera.transform.rotation = Quaternion.LookRotation(
@@ -151,18 +139,12 @@ namespace DenisPavlenko.Game
 					Destroy(_obstacleViews[id].gameObject);
 				}
 			}
-
-			if (ids.Count > 0)
-			{
-				Haptics.Play(HapticPreset.MediumImpact);
-			}
 		}
 
 		private void Finish(bool isWin)
 		{
 			_finished = true;
 			_shot.Hide();
-			Haptics.Play(isWin ? HapticPreset.Success : HapticPreset.Failure);
 			_hud.ShowResult(isWin);
 		}
 
