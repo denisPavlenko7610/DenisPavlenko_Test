@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77540a1e8ba601a40a09d6f4f0bac85a, type: 3}
+  m_Name: GameConfig
+  m_EditorClassIdentifier: Assembly-CSharp::DenisPavlenko.Game.Core.GameConfig
+  _initialBallRadius: 1
+  _criticalVolumeFraction: 0.2
+  _minimumShotRadius: 0.15
+  _shotGrowRate: 1.2
+  _shotSpeed: 14
+  _blastRadiusMultiplier: 1.4
+  _obstacleExplosionDelay: 0.04
+  _trackWidthPerBallRadius: 2.6
+  _playerAdvanceSpeed: 9
+  _obstacleApproachDistance: 1.2

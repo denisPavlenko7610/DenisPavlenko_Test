@@ -13,7 +13,5 @@ MonoBehaviour:
   m_Name: SceneCatalog
   m_EditorClassIdentifier: 
   _scenes:
-  - _id: loading
-    _path: Assets/Scenes/Loading.unity
   - _id: game
     _path: Assets/Scenes/Game.unity

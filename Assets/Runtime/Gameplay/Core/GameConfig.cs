@@ -1,28 +1,36 @@
+using UnityEngine;
+
 namespace DenisPavlenko.Game.Core
 {
-	public sealed class GameConfig
+	[CreateAssetMenu(menuName = "Denis Pavlenko/Game Config", fileName = "GameConfig")]
+	public sealed class GameConfig : ScriptableObject
 	{
-		public static GameConfig CreateDefault() => new();
+		[Header("Ball")]
+		[SerializeField, Min(0.1f)] private float _initialBallRadius = 1f;
+		[SerializeField, Range(0.05f, 0.5f)] private float _criticalVolumeFraction = 0.2f;
+		[SerializeField, Min(0.01f)] private float _minimumShotRadius = 0.15f;
+		[SerializeField, Min(0.01f)] private float _shotGrowRate = 1.2f;
 
-		public float InitialBallRadius { get; set; } = 1f;
-		public float CriticalBallFraction { get; set; } = 0.18f;
-		public float ShotGrowRate { get; set; } = 1.2f;
-		public float ShotSpeed { get; set; } = 14f;
-		public float BlastRadiusMultiplier { get; set; } = 2.6f;
-		public float InfectionRadius { get; set; } = 2.2f;
-		public float TrackWidthFactor { get; set; } = 2.6f;
-		public float AdvanceSpeed { get; set; } = 9f;
-		public float DoorOpenDistance { get; set; } = 5f;
-		public float StopBeforeObstacleDistance { get; set; } = 1.2f;
-		public float BallHopHeight { get; set; } = 0.6f;
-		public float BallHopFrequency { get; set; } = 14f;
-		public float MinShotRadius { get; set; } = 0.15f;
-		public float CameraSideOffset { get; set; } = 12f;
-		public float CameraHeight { get; set; } = 9f;
-		public float CameraBackOffset { get; set; } = 4f;
-		public float CameraLookAhead { get; set; } = 25f;
-		public float CameraLookHeight { get; set; } = 1.2f;
+		[Header("Shot")]
+		[SerializeField, Min(0.1f)] private float _shotSpeed = 14f;
+		[SerializeField, Min(0.1f)] private float _blastRadiusMultiplier = 1.4f;
+		[SerializeField, Min(0f)] private float _obstacleExplosionDelay = 0.06f;
 
-		public float CriticalRadius => InitialBallRadius * CriticalBallFraction;
+		[Header("Movement")]
+		[SerializeField, Min(1f)] private float _trackWidthPerBallRadius = 2.6f;
+		[SerializeField, Min(0.1f)] private float _playerAdvanceSpeed = 9f;
+		[SerializeField, Min(0f)] private float _obstacleApproachDistance = 1.2f;
+
+		public float InitialBallRadius => _initialBallRadius;
+		public float CriticalVolumeFraction => _criticalVolumeFraction;
+		public float CriticalRadius => _initialBallRadius * Mathf.Pow(_criticalVolumeFraction, 1f / 3f);
+		public float MinShotRadius => _minimumShotRadius;
+		public float ShotGrowRate => _shotGrowRate;
+		public float ShotSpeed => _shotSpeed;
+		public float BlastRadiusMultiplier => _blastRadiusMultiplier;
+		public float ObstacleExplosionDelay => _obstacleExplosionDelay;
+		public float TrackWidthPerBallRadius => _trackWidthPerBallRadius;
+		public float PlayerAdvanceSpeed => _playerAdvanceSpeed;
+		public float ObstacleApproachDistance => _obstacleApproachDistance;
 	}
 }

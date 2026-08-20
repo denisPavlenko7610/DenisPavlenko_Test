@@ -35,7 +35,7 @@ namespace DenisPavlenko.Game.Core
 			foreach (Obstacle obstacle in _byId.Values)
 			{
 				float closestX = Math.Clamp(x, obstacle.MinX, obstacle.MaxX);
-				float closestZ = Math.Clamp(z, obstacle.PositionZ - 0.5f, obstacle.PositionZ + 0.5f);
+				float closestZ = Math.Clamp(z, obstacle.PositionZ - obstacle.HalfDepth, obstacle.PositionZ + obstacle.HalfDepth);
 				float dx = x - closestX;
 				float dz = z - closestZ;
 

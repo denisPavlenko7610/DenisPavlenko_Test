@@ -1,12 +1,13 @@
 using System;
 using UnityEngine;
 using VContainer;
+using VContainer.Unity;
 using UnityTemplates.Foundation;
 using UnityTemplates.SceneFlow;
 
 namespace DenisPavlenko.Project.Architecture
 {
-	public sealed class BootstrapEntryPoint : MonoBehaviour
+	public sealed class BootstrapEntryPoint : IStartable
 	{
 		private ISceneFlow _sceneFlow;
 
@@ -16,7 +17,12 @@ namespace DenisPavlenko.Project.Architecture
 			_sceneFlow = sceneFlow;
 		}
 
-		private async void Start()
+		public void Start()
+		{
+			_ = LoadGameAsync();
+		}
+
+		private async Awaitable LoadGameAsync()
 		{
 			try
 			{
@@ -24,7 +30,7 @@ namespace DenisPavlenko.Project.Architecture
 			}
 			catch (Exception exception)
 			{
-				UnityLogger.LogException(exception, this);
+				UnityLogger.LogException(exception);
 			}
 		}
 	}

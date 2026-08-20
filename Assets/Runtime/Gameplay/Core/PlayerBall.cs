@@ -5,6 +5,7 @@ namespace DenisPavlenko.Game.Core
 	public sealed class PlayerBall
 	{
 		private readonly GameConfig _config;
+		private readonly float _initialVolume;
 		private float _remainingMass;
 		private float _radius;
 
@@ -12,11 +13,13 @@ namespace DenisPavlenko.Game.Core
 		{
 			_config = config ?? throw new ArgumentNullException(nameof(config));
 			_radius = config.InitialBallRadius;
-			_remainingMass = _radius * _radius * _radius;
+			_initialVolume = Cube(_radius);
+			_remainingMass = _initialVolume;
 		}
 
 		public float Radius => _radius;
-		public float CriticalRadius => _config.CriticalRadius;
+		public float VolumeFraction => Cube(_radius) / _initialVolume;
+		public float ChargedShotVolumeFraction => Cube(ChargedShotRadius) / _initialVolume;
 		public bool IsCriticallySmall => _radius <= _config.CriticalRadius + float.Epsilon;
 		public float ChargedShotRadius { get; private set; }
 
@@ -51,5 +54,13 @@ namespace DenisPavlenko.Game.Core
 			ChargedShotRadius = 0f;
 			return fired;
 		}
+
+		public void CancelCharge()
+		{
+			ChargedShotRadius = 0f;
+			_radius = (float)Math.Pow(_remainingMass, 1.0 / 3.0);
+		}
+
+		private static float Cube(float value) => value * value * value;
 	}
 }

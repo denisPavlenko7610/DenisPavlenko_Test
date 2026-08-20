@@ -267,6 +267,11 @@ namespace UnityTemplates.SceneFlow
 
 		private static void SetActiveScene(Scene scene)
 		{
+			if (SceneManager.GetActiveScene() == scene)
+			{
+				return;
+			}
+
 			if (!SceneManager.SetActiveScene(scene))
 			{
 				throw new InvalidOperationException($"Failed to set scene '{scene.path}' as active.");

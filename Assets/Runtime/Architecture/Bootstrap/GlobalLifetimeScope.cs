@@ -23,7 +23,11 @@ namespace DenisPavlenko.Project.Architecture
 			}
 
 			builder.RegisterInstance(_sceneCatalog);
-			builder.Register<SceneFlow>(Lifetime.Singleton).As<ISceneFlow>();
+			builder.Register<ISceneFlow>(
+				resolver => new SceneFlow(resolver.Resolve<SceneCatalog>()),
+				Lifetime.Singleton
+			);
+			builder.RegisterEntryPoint<BootstrapEntryPoint>();
 		}
 	}
 }
