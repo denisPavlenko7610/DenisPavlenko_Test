@@ -15,9 +15,8 @@ MonoBehaviour:
   _criticalVolumeFraction: 0.2
   _minimumShotRadius: 0.15
   _maxChargeDuration: 1.25
-  _overchargeGraceDuration: 0.35
   _shotSpeed: 14
-  _blastRadiusMultiplier: 1.8
+  _blastRadiusMultiplier: 3
   _obstacleExplosionDelay: 0.04
   _trackWidthPerBallRadius: 2.6
   _playerAdvanceSpeed: 9

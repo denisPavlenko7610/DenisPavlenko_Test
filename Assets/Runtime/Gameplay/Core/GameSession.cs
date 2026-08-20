@@ -54,7 +54,6 @@ namespace DenisPavlenko.Game.Core
 			Ball = new PlayerBall(config, initialBallRadius);
 		}
 
-		public event Action ShotFired;
 		public event Action<float, float, IReadOnlyList<int>> ObstaclesDestroyed;
 		public event Action Won;
 		public event Action Lost;
@@ -104,7 +103,6 @@ namespace DenisPavlenko.Game.Core
 
 			_activeShots.Add(new ActiveShot(Ball.ConsumeShot(), PlayerZ));
 			Phase = GamePhase.Idle;
-			ShotFired?.Invoke();
 			return true;
 		}
 

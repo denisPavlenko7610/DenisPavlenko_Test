@@ -37,7 +37,6 @@ namespace DenisPavlenko.Game
 				return;
 			}
 
-			_session.ShotFired -= OnShotFired;
 			_session.ObstaclesDestroyed -= OnObstaclesDestroyed;
 			_session.Won -= OnWon;
 			_session.Lost -= OnLost;
@@ -58,7 +57,6 @@ namespace DenisPavlenko.Game
 			float startRadius = new LevelBalance(_config).ComputeStartRadius(layout);
 
 			_session = new GameSession(_config, layout, startRadius);
-			_session.ShotFired += OnShotFired;
 			_session.ObstaclesDestroyed += OnObstaclesDestroyed;
 			_session.Won += OnWon;
 			_session.Lost += OnLost;
@@ -98,11 +96,6 @@ namespace DenisPavlenko.Game
 		private void UpdatePresentation()
 		{
 			_world.Present(_session);
-		}
-
-		private void OnShotFired()
-		{
-			_world.PulsePlayer();
 		}
 
 		private void OnObstaclesDestroyed(float blastZ, float blastRadius, IReadOnlyList<int> ids)

@@ -48,11 +48,6 @@ namespace DenisPavlenko.Game
 			PresentCamera(session);
 		}
 
-		public void PulsePlayer()
-		{
-			_player.Pulse();
-		}
-
 		public void HideShot()
 		{
 			if (_chargingShot != null)

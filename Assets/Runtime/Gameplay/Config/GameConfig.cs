@@ -5,19 +5,18 @@ namespace DenisPavlenko.Game.Core
 	[CreateAssetMenu(menuName = "Denis Pavlenko/Game Config", fileName = "GameConfig")]
 	public sealed class GameConfig : ScriptableObject
 	{
-		[Header("Ball"), Tooltip("Reserved volume fraction and the critical loss threshold."), SerializeField,
-		Range(0.05f, 0.5f)]
-			private float _criticalVolumeFraction = 0.2f;
+		[Header("Ball")]
+		[SerializeField, Range(0.05f, 0.5f)] private float _criticalVolumeFraction = 0.2f;
 		[SerializeField, Min(0.01f)] private float _minimumShotRadius = 0.15f;
 		[SerializeField, Min(0.1f)] private float _maxChargeDuration = 1.25f;
 
-		[Header("Shot"), SerializeField, Min(0.1f)]
-			private float _shotSpeed = 14f;
-		[SerializeField, Min(0.1f)] private float _blastRadiusMultiplier = 1.8f;
-		[SerializeField, Min(0f)] private float _obstacleExplosionDelay = 0.06f;
+		[Header("Shot")]
+		[SerializeField, Min(0.1f)] private float _shotSpeed = 14f;
+		[SerializeField, Min(0.1f)] private float _blastRadiusMultiplier = 5f;
+		[SerializeField, Min(0f)] private float _obstacleExplosionDelay = 0.04f;
 
-		[Header("Movement"), SerializeField, Min(1f)]
-			private float _trackWidthPerBallRadius = 2.6f;
+		[Header("Movement")]
+		[SerializeField, Min(1f)] private float _trackWidthPerBallRadius = 2.6f;
 		[SerializeField, Min(0.1f)] private float _playerAdvanceSpeed = 9f;
 		[SerializeField, Min(0f)] private float _obstacleClearance = 0.15f;
 		[SerializeField, Min(0f)] private float _obstacleApproachDistance = 1.2f;

@@ -58,7 +58,7 @@ namespace DenisPavlenko.Game.Core
 			float remainingVolume = startVolume;
 			float reserveVolume = startVolume * _config.CriticalVolumeFraction;
 
-			for (int shot = 0; shot < layout.Obstacles.Count; shot++)
+			for (int shot = 0; shot < source.Obstacles.Count; shot++)
 			{
 				float playerRadius = VolumeMath.CubeRoot(remainingVolume);
 				if (layout.FindNextBlockingObstacle(
@@ -93,7 +93,10 @@ namespace DenisPavlenko.Game.Core
 				}
 			}
 
-			return false;
+			return layout.FindNextBlockingObstacle(
+				0f,
+				VolumeMath.CubeRoot(remainingVolume) + _config.ObstacleClearance
+			) == null;
 		}
 
 		private float SmallestShotRadius(IEnumerable<Obstacle> obstacles)
