@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityTemplates.Tween;
 
 namespace DenisPavlenko.Game.UI
 {
@@ -9,47 +8,42 @@ namespace DenisPavlenko.Game.UI
 	{
 		private const string PlayerLabel = "PLAYER  {0}";
 		private const string ShotLabel = "SHOT  {0}";
+		private const int WholePercent = 100;
 
 		public event Action RestartRequested;
 
 		[SerializeField] private Text _playerVolumeText;
 		[SerializeField] private Text _shotVolumeText;
-		[SerializeField] private GameObject _winPanel;
-		[SerializeField] private GameObject _losePanel;
-		[SerializeField] private Button _winRestartButton;
-		[SerializeField] private Button _loseRestartButton;
-		[SerializeField, Min(0.01f)] private float _resultAnimationDuration = 0.28f;
+		[SerializeField] private ResultPanelView _winPanel;
+		[SerializeField] private ResultPanelView _losePanel;
 
 		private void Awake()
 		{
-			_winPanel.SetActive(false);
-			_losePanel.SetActive(false);
-			_winRestartButton.onClick.AddListener(OnRestartClicked);
-			_loseRestartButton.onClick.AddListener(OnRestartClicked);
+			_winPanel.RestartRequested += OnRestartClicked;
+			_losePanel.RestartRequested += OnRestartClicked;
 		}
 
 		private void OnDestroy()
 		{
-			_winRestartButton.onClick.RemoveListener(OnRestartClicked);
-			_loseRestartButton.onClick.RemoveListener(OnRestartClicked);
+			if (_winPanel == null)
+			{
+				return;
+			}
+
+			_winPanel.RestartRequested -= OnRestartClicked;
+			_losePanel.RestartRequested -= OnRestartClicked;
 		}
 
 		public void SetVolumes(float playerFraction, float shotFraction)
 		{
-			_playerVolumeText.text = string.Format(PlayerLabel, ToWholeVolume(playerFraction));
-			_shotVolumeText.text = string.Format(ShotLabel, ToWholeVolume(shotFraction));
+			_playerVolumeText.text = string.Format(PlayerLabel, ToWholePercent(playerFraction));
+			_shotVolumeText.text = string.Format(ShotLabel, ToWholePercent(shotFraction));
 		}
 
-		public void ShowResult(bool isWin)
-		{
-			GameObject panelObject = isWin ? _winPanel : _losePanel;
-			panelObject.SetActive(true);
-			Transform panel = panelObject.transform;
-			panel.localScale = Vector3.zero;
-			panel.ScaleTo(Vector3.one, _resultAnimationDuration).SetEase(EaseType.OutBack);
-		}
+		public void ShowResult(bool isWin) => (isWin ? _winPanel : _losePanel).Show();
 
-		private static int ToWholeVolume(float fraction) => Mathf.Clamp(Mathf.RoundToInt(fraction * 100f), 0, 100);
+		private static int ToWholePercent(float fraction) =>
+			Mathf.Clamp(Mathf.RoundToInt(fraction * WholePercent), 0, WholePercent);
 
 		private void OnRestartClicked() => RestartRequested?.Invoke();
 	}

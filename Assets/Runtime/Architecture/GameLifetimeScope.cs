@@ -14,7 +14,7 @@ namespace DenisPavlenko.Project.Architecture
 		[SerializeField] private Transform _playerSpawnPoint;
 		[SerializeField] private Transform _runtimeRoot;
 		[SerializeField] private GameWorldView _world;
-		[SerializeField] private GameFlowController _controller;
+		[SerializeField] private GameController _controller;
 
 		protected override void Configure(IContainerBuilder builder)
 		{
@@ -27,7 +27,7 @@ namespace DenisPavlenko.Project.Architecture
 
 			builder.RegisterComponent(_world);
 			builder.RegisterComponent(_controller);
-			builder.RegisterBuildCallback(resolver => resolver.Resolve<GameFlowController>().Initialize());
+			builder.RegisterBuildCallback(resolver => resolver.Resolve<GameController>().Initialize());
 		}
 	}
 }

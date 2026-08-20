@@ -1,3 +1,4 @@
+using DenisPavlenko.Game.Core;
 using UnityEngine;
 
 namespace DenisPavlenko.Game
@@ -14,7 +15,7 @@ namespace DenisPavlenko.Game
 
 		public void Set(float radius, float z)
 		{
-			transform.localScale = Vector3.one * radius * 2f;
+			transform.localScale = Vector3.one * VolumeMath.Diameter(radius);
 			transform.position = new Vector3(0f, radius, z);
 		}
 

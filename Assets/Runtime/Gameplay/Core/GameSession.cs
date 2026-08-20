@@ -48,7 +48,9 @@ namespace DenisPavlenko.Game.Core
 
 		public float ShotVolumeFraction => Phase == GamePhase.Charging
 			? _ball.ChargedShotVolumeFraction
-			: _shotActive ? Cube(_shotRadius / _config.InitialBallRadius) : 0f;
+			: _shotActive
+				? VolumeMath.Cube(_shotRadius / _config.InitialBallRadius)
+				: 0f;
 
 		public event Action<float> ShotFired;
 		public event Action<IReadOnlyList<int>> ObstaclesDestroyed;
@@ -111,9 +113,11 @@ namespace DenisPavlenko.Game.Core
 				case GamePhase.ShotInFlight:
 					TickShot(deltaTime);
 					break;
+
 				case GamePhase.Advancing:
 					TickAdvance(deltaTime);
 					break;
+
 				case GamePhase.Idle:
 					CheckStuck();
 					break;
@@ -124,7 +128,7 @@ namespace DenisPavlenko.Game.Core
 		{
 			_shotZ += _config.ShotSpeed * deltaTime;
 
-			float? nextBlockingZ = NextBlockingPositionZ();
+			float? nextBlockingZ = _layout.FindNextBlockingZ(_playerZ, _ball.Radius);
 
 			if (nextBlockingZ == null || _shotZ >= nextBlockingZ.Value)
 			{
@@ -135,16 +139,7 @@ namespace DenisPavlenko.Game.Core
 		private void ResolveBlast(float blastZ)
 		{
 			float blastRadius = _shotRadius * _config.BlastRadiusMultiplier;
-			List<int> destroyed = new();
-			foreach (Obstacle obstacle in _layout.ObstaclesInRadius(blastZ, 0f, blastRadius))
-			{
-				if (!_layout.RemoveObstacle(obstacle.Id))
-				{
-					continue;
-				}
-
-				destroyed.Add(obstacle.Id);
-			}
+			List<int> destroyed = DestroyObstaclesInRadius(blastZ, blastRadius);
 
 			_shotActive = false;
 			Phase = GamePhase.Idle;
@@ -156,8 +151,27 @@ namespace DenisPavlenko.Game.Core
 				return;
 			}
 
+			StartAdvancing();
+		}
+
+		private List<int> DestroyObstaclesInRadius(float blastZ, float blastRadius)
+		{
+			List<int> destroyed = new();
+			foreach (Obstacle obstacle in _layout.ObstaclesInRadius(blastZ, 0f, blastRadius))
+			{
+				if (_layout.RemoveObstacle(obstacle.Id))
+				{
+					destroyed.Add(obstacle.Id);
+				}
+			}
+
+			return destroyed;
+		}
+
+		private void StartAdvancing()
+		{
 			Phase = GamePhase.Advancing;
-			float? nextBlocking = NextBlockingPositionZ();
+			float? nextBlocking = _layout.FindNextBlockingZ(_playerZ, _ball.Radius);
 			_stopZ = nextBlocking == null
 				? _layout.TargetZ
 				: nextBlocking.Value - _config.ObstacleApproachDistance;
@@ -180,43 +194,15 @@ namespace DenisPavlenko.Game.Core
 
 		private void CheckStuck()
 		{
-			if (NextBlockingPositionZ() == null)
+			if (_layout.FindNextBlockingZ(_playerZ, _ball.Radius) == null)
 			{
 				return;
 			}
 
-			if (_ball.IsCriticallySmall)
-			{
-				Fail();
-				return;
-			}
-
-			if (_ball.MaxShotRadius < _config.MinShotRadius)
+			if (_ball.IsCriticallySmall || _ball.MaxShotRadius < _config.MinShotRadius)
 			{
 				Fail();
 			}
-		}
-
-		private float? NextBlockingPositionZ()
-		{
-			float? nearest = null;
-			foreach (Obstacle obstacle in _layout.Obstacles)
-			{
-				if (obstacle.PositionZ <= _playerZ)
-				{
-					continue;
-				}
-
-				if (obstacle.MinX < _ball.Radius && obstacle.MaxX > -_ball.Radius)
-				{
-					if (nearest == null || obstacle.PositionZ < nearest)
-					{
-						nearest = obstacle.PositionZ;
-					}
-				}
-			}
-
-			return nearest;
 		}
 
 		private void Win()
@@ -230,7 +216,5 @@ namespace DenisPavlenko.Game.Core
 			Phase = GamePhase.Lost;
 			Lost?.Invoke();
 		}
-
-		private static float Cube(float value) => value * value * value;
 	}
 }

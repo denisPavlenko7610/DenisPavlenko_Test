@@ -581,6 +581,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4015827467744736491, guid: 540cbde091974d445bb90afe8c54e427, type: 3}
   m_PrefabInstance: {fileID: 42617686}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &42617690 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9192000000000000002, guid: 540cbde091974d445bb90afe8c54e427, type: 3}
+  m_PrefabInstance: {fileID: 42617686}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18d2a25e7003430096e4f1a0fa388fca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DenisPavlenko.Game.UI.ResultPanelView
 --- !u!1 &53182369
 GameObject:
   m_ObjectHideFlags: 0
@@ -2439,11 +2450,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DenisPavlenko.Game.UI.GameHud
   _playerVolumeText: {fileID: 2068925727}
   _shotVolumeText: {fileID: 53182371}
-  _winPanel: {fileID: 1424783261}
-  _losePanel: {fileID: 42617689}
-  _winRestartButton: {fileID: 1424783260}
-  _loseRestartButton: {fileID: 42617688}
-  _resultAnimationDuration: 0.2
+  _winPanel: {fileID: 1424783262}
+  _losePanel: {fileID: 42617690}
 --- !u!224 &345219481
 RectTransform:
   m_ObjectHideFlags: 0
@@ -6810,6 +6818,17 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 8178918095285520445, guid: ed196b724ea3ee449869f393f97d0024, type: 3}
   m_PrefabInstance: {fileID: 1424783258}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1424783262 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 9192000000000000001, guid: ed196b724ea3ee449869f393f97d0024, type: 3}
+  m_PrefabInstance: {fileID: 1424783258}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18d2a25e7003430096e4f1a0fa388fca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DenisPavlenko.Game.UI.ResultPanelView
 --- !u!1 &1425898173
 GameObject:
   m_ObjectHideFlags: 0

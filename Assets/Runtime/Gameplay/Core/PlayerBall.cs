@@ -6,6 +6,7 @@ namespace DenisPavlenko.Game.Core
 	{
 		private readonly GameConfig _config;
 		private readonly float _initialVolume;
+		private readonly float _criticalVolume;
 		private float _remainingMass;
 		private float _radius;
 
@@ -13,17 +14,18 @@ namespace DenisPavlenko.Game.Core
 		{
 			_config = config ?? throw new ArgumentNullException(nameof(config));
 			_radius = config.InitialBallRadius;
-			_initialVolume = Cube(_radius);
+			_initialVolume = VolumeMath.Cube(_radius);
+			_criticalVolume = VolumeMath.Cube(config.CriticalRadius);
 			_remainingMass = _initialVolume;
 		}
 
 		public float Radius => _radius;
-		public float VolumeFraction => Cube(_radius) / _initialVolume;
-		public float ChargedShotVolumeFraction => Cube(ChargedShotRadius) / _initialVolume;
+		public float VolumeFraction => VolumeMath.Cube(_radius) / _initialVolume;
+		public float ChargedShotVolumeFraction => VolumeMath.Cube(ChargedShotRadius) / _initialVolume;
 		public bool IsCriticallySmall => _radius <= _config.CriticalRadius + float.Epsilon;
 		public float ChargedShotRadius { get; private set; }
 
-		public float MaxShotRadius => (float)Math.Pow(Math.Max(0f, _remainingMass - _config.CriticalRadius * _config.CriticalRadius * _config.CriticalRadius), 1.0 / 3.0);
+		public float MaxShotRadius => VolumeMath.CubeRoot(Math.Max(0f, _remainingMass - _criticalVolume));
 
 		public void Charge(float deltaTime, out bool overcharged)
 		{
@@ -34,7 +36,7 @@ namespace DenisPavlenko.Game.Core
 			}
 
 			float nextShot = ChargedShotRadius + _config.ShotGrowRate * deltaTime;
-			float nextBall = (float)Math.Pow(Math.Max(0f, _remainingMass - nextShot * nextShot * nextShot), 1.0 / 3.0);
+			float nextBall = VolumeMath.CubeRoot(Math.Max(0f, _remainingMass - VolumeMath.Cube(nextShot)));
 
 			if (nextBall < _config.CriticalRadius)
 			{
@@ -50,7 +52,7 @@ namespace DenisPavlenko.Game.Core
 		public float ConsumeShot()
 		{
 			float fired = ChargedShotRadius;
-			_remainingMass = _radius * _radius * _radius;
+			_remainingMass = VolumeMath.Cube(_radius);
 			ChargedShotRadius = 0f;
 			return fired;
 		}
@@ -58,9 +60,7 @@ namespace DenisPavlenko.Game.Core
 		public void CancelCharge()
 		{
 			ChargedShotRadius = 0f;
-			_radius = (float)Math.Pow(_remainingMass, 1.0 / 3.0);
+			_radius = VolumeMath.CubeRoot(_remainingMass);
 		}
-
-		private static float Cube(float value) => value * value * value;
 	}
 }

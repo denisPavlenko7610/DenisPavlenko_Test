@@ -132,6 +132,7 @@ GameObject:
   - component: {fileID: 4198458126104046847}
   - component: {fileID: 3869373892142724220}
   - component: {fileID: 9037533330502525096}
+  - component: {fileID: 9192000000000000002}
   m_Layer: 5
   m_Name: LosePanel
   m_TagString: Untagged
@@ -198,6 +199,20 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &9192000000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4015827467744736491}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18d2a25e7003430096e4f1a0fa388fca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DenisPavlenko.Game.UI.ResultPanelView
+  _restartButton: {fileID: 3515329021825002866}
+  _showDuration: 0.2
 --- !u!1 &4137141425709057164
 GameObject:
   m_ObjectHideFlags: 0

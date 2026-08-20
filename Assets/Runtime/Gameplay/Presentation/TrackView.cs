@@ -1,3 +1,4 @@
+using DenisPavlenko.Game.Core;
 using UnityEngine;
 
 namespace DenisPavlenko.Game
@@ -9,7 +10,7 @@ namespace DenisPavlenko.Game
 		public void SetWidth(float halfWidth)
 		{
 			Vector3 roadScale = _road.localScale;
-			roadScale.x = halfWidth * 2f;
+			roadScale.x = VolumeMath.Diameter(halfWidth);
 			_road.localScale = roadScale;
 		}
 	}

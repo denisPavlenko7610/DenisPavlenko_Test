@@ -23,7 +23,7 @@ namespace DenisPavlenko.Game.Core
 
 		public float InitialBallRadius => _initialBallRadius;
 		public float CriticalVolumeFraction => _criticalVolumeFraction;
-		public float CriticalRadius => _initialBallRadius * Mathf.Pow(_criticalVolumeFraction, 1f / 3f);
+		public float CriticalRadius => _initialBallRadius * VolumeMath.CubeRoot(_criticalVolumeFraction);
 		public float MinShotRadius => _minimumShotRadius;
 		public float ShotGrowRate => _shotGrowRate;
 		public float ShotSpeed => _shotSpeed;

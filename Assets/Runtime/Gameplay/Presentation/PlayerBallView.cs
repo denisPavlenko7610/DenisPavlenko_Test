@@ -1,3 +1,4 @@
+using DenisPavlenko.Game.Core;
 using UnityEngine;
 using UnityTemplates.Tween;
 
@@ -18,13 +19,13 @@ namespace DenisPavlenko.Game
 			float hop = isMoving
 				? Mathf.Abs(Mathf.Sin(Time.time * _advanceHopCyclesPerSecond)) * _advanceHopHeight
 				: 0f;
-			transform.localScale = Vector3.one * (radius * 2f);
+			transform.localScale = Vector3.one * VolumeMath.Diameter(radius);
 			transform.position = new Vector3(0f, radius + hop, z);
 		}
 
 		public void Pulse()
 		{
-			Vector3 normalScale = Vector3.one * (_radius * 2f);
+			Vector3 normalScale = Vector3.one * VolumeMath.Diameter(_radius);
 			transform.ScaleTo(normalScale * _pulseScale, _pulseDuration * 0.5f)
 				.SetEase(EaseType.OutQuad)
 				.OnComplete(() => transform.ScaleTo(normalScale, _pulseDuration * 0.5f));
