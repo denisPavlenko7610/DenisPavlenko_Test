@@ -12,13 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 77540a1e8ba601a40a09d6f4f0bac85a, type: 3}
   m_Name: GameConfig
   m_EditorClassIdentifier: Assembly-CSharp::DenisPavlenko.Game.Core.GameConfig
-  _initialBallRadius: 1
   _criticalVolumeFraction: 0.2
   _minimumShotRadius: 0.15
-  _shotGrowRate: 1.2
+  _maxChargeDuration: 3
+  _safetyMargin: 1.25
   _shotSpeed: 14
   _blastRadiusMultiplier: 1.4
   _obstacleExplosionDelay: 0.04
   _trackWidthPerBallRadius: 2.6
   _playerAdvanceSpeed: 9
+  _obstacleClearance: 0.15
   _obstacleApproachDistance: 1.2

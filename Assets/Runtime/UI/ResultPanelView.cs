@@ -14,7 +14,6 @@ namespace DenisPavlenko.Game.UI
 
 		private void Awake()
 		{
-			gameObject.SetActive(false);
 			_restartButton.onClick.AddListener(OnRestartClicked);
 		}
 

@@ -45,8 +45,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b01043f8eefe19d46b6bc4d9066f400b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DenisPavlenko.Game.ObstacleView
-  _infectedColor: {r: 1, g: 0.32, b: 0.06, a: 1}
-  _animationDuration: 0.2
+  _renderer: {fileID: 1270007389919884470}
+  _config: {fileID: 11400000, guid: df9e4344b2f119e4096aa728ca4d82b6, type: 2}
 --- !u!1 &7998639195156569713
 GameObject:
   m_ObjectHideFlags: 0

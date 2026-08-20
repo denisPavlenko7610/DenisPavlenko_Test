@@ -28,42 +28,47 @@ namespace DenisPavlenko.Game.Core
 		public float TargetZ { get; }
 		public IReadOnlyCollection<Obstacle> Obstacles => _byId.Values;
 
-		public float? FindNextBlockingZ(float playerZ, float ballRadius)
+		public Obstacle FindNextBlockingObstacle(float fromZ, float movingSphereRadius)
 		{
-			float? nearest = null;
+			Obstacle nearest = null;
+			float nearestContactZ = float.MaxValue;
 
 			foreach (Obstacle obstacle in _byId.Values)
 			{
-				if (obstacle.PositionZ <= playerZ)
+				if (obstacle.MaxZ <= fromZ ||
+					!obstacle.TryGetContactZ(movingSphereRadius, out float contactZ))
 				{
 					continue;
 				}
 
-				if (obstacle.MinX < ballRadius && obstacle.MaxX > -ballRadius)
+				if (contactZ < fromZ)
 				{
-					if (nearest == null || obstacle.PositionZ < nearest)
-					{
-						nearest = obstacle.PositionZ;
-					}
+					continue;
+				}
+
+				if (contactZ < nearestContactZ)
+				{
+					nearest = obstacle;
+					nearestContactZ = contactZ;
 				}
 			}
 
 			return nearest;
 		}
 
-		public IReadOnlyList<Obstacle> ObstaclesInRadius(float z, float x, float radius)
+		public IReadOnlyList<Obstacle> ObstaclesInRadius(float z, float radius)
 		{
 			List<Obstacle> hit = new();
 
 			foreach (Obstacle obstacle in _byId.Values)
 			{
-				float closestX = Math.Clamp(x, obstacle.MinX, obstacle.MaxX);
+				float closestX = Math.Clamp(0f, obstacle.MinX, obstacle.MaxX);
 				float closestZ = Math.Clamp(
 					z,
 					obstacle.PositionZ - obstacle.HalfDepth,
 					obstacle.PositionZ + obstacle.HalfDepth
 				);
-				float dx = x - closestX;
+				float dx = -closestX;
 				float dz = z - closestZ;
 
 				if (dx * dx + dz * dz <= radius * radius)

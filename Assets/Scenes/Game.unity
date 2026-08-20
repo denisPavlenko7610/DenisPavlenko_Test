@@ -565,22 +565,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 4198458126104046847, guid: 540cbde091974d445bb90afe8c54e427, type: 3}
   m_PrefabInstance: {fileID: 42617686}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &42617688 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3515329021825002866, guid: 540cbde091974d445bb90afe8c54e427, type: 3}
-  m_PrefabInstance: {fileID: 42617686}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
---- !u!1 &42617689 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 4015827467744736491, guid: 540cbde091974d445bb90afe8c54e427, type: 3}
-  m_PrefabInstance: {fileID: 42617686}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &42617690 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 9192000000000000002, guid: 540cbde091974d445bb90afe8c54e427, type: 3}
@@ -2507,9 +2491,9 @@ MonoBehaviour:
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 576, y: 1024}
+  m_ReferenceResolution: {x: 1080, y: 2160}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0.5
+  m_MatchWidthOrHeight: 1
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -3256,7 +3240,7 @@ GameObject:
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
+  m_StaticEditorFlags: 2147483647
   m_IsActive: 1
 --- !u!4 &696770923
 Transform:
@@ -3761,7 +3745,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 38c6288ef8b245148bd2b8ea9ceab98d, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DenisPavlenko.Game.TrackView
   _road: {fileID: 771699095}
 --- !u!1 &822713332
@@ -3794,29 +3778,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a9b503f818eec74d985557d0900ebd5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DenisPavlenko.Game.GameFlowController
-  _shotPool: {fileID: 861234568}
-  _gizmoConfig: {fileID: 11400000, guid: 1b8440e946e550d4194c985d9b626c34, type: 2}
-  _gizmoOrigin: {fileID: 1305685260}
-  _gizmoShotRadius: 0.5
---- !u!114 &861234567
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 822713332}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e7fae40331cc9044da32f4b9315cac7d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DenisPavlenko.Game.GameWorldView
-  _obstaclesRoot: {fileID: 322034262}
-  _track: {fileID: 771699098}
-  _door: {fileID: 1899620653}
-  _hud: {fileID: 345219480}
-  _camera: {fileID: 3002}
-  _cameraStart: {fileID: 54068983}
-  _cameraLookAt: {fileID: 464779755}
 --- !u!4 &822713335
 Transform:
   m_ObjectHideFlags: 0
@@ -4060,6 +4021,26 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 1433606578817663073, guid: e7020d951d82ae341bbc8300231f279c, type: 3}
   m_PrefabInstance: {fileID: 851519999}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &861234567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 822713332}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e7fae40331cc9044da32f4b9315cac7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DenisPavlenko.Game.GameWorldView
+  _obstaclesRoot: {fileID: 322034262}
+  _track: {fileID: 771699098}
+  _door: {fileID: 1899620653}
+  _hud: {fileID: 345219480}
+  _camera: {fileID: 3002}
+  _cameraStart: {fileID: 54068983}
+  _cameraLookAt: {fileID: 464779755}
+  _shotPrefab: {fileID: 4300422446419054895, guid: cb9b808faed54d5438076a55d2f100b3, type: 3}
 --- !u!1001 &876917483
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6802,22 +6783,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5119808442692883085, guid: ed196b724ea3ee449869f393f97d0024, type: 3}
   m_PrefabInstance: {fileID: 1424783258}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1424783260 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 1636124728237962370, guid: ed196b724ea3ee449869f393f97d0024, type: 3}
-  m_PrefabInstance: {fileID: 1424783258}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
---- !u!1 &1424783261 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 8178918095285520445, guid: ed196b724ea3ee449869f393f97d0024, type: 3}
-  m_PrefabInstance: {fileID: 1424783258}
-  m_PrefabAsset: {fileID: 0}
 --- !u!114 &1424783262 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 9192000000000000001, guid: ed196b724ea3ee449869f393f97d0024, type: 3}
@@ -6838,7 +6803,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1425898174}
-  - component: {fileID: 861234568}
   m_Layer: 0
   m_Name: RuntimeObjects
   m_TagString: Untagged
@@ -6862,19 +6826,6 @@ Transform:
   - {fileID: 1305685260}
   m_Father: {fileID: 822713335}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &861234568
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1425898173}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0fe6557d3d13bd740b0af0d496a1b3f3, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::DenisPavlenko.Game.ShotPool
-  _prefab: {fileID: 4300422446419054895, guid: cb9b808faed54d5438076a55d2f100b3, type: 3}
 --- !u!1001 &1459674702
 PrefabInstance:
   m_ObjectHideFlags: 0

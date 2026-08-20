@@ -26,5 +26,25 @@ namespace DenisPavlenko.Game.Core
 
 		public float MinX => CenterX - HalfWidth;
 		public float MaxX => CenterX + HalfWidth;
+		public float MinZ => PositionZ - HalfDepth;
+		public float MaxZ => PositionZ + HalfDepth;
+		public float BoundingRadius => (float)Math.Sqrt(HalfWidth * HalfWidth + HalfDepth * HalfDepth);
+
+		public bool TryGetContactZ(float movingSphereRadius, out float contactZ)
+		{
+			float distanceToCenterLine = Math.Max(Math.Max(MinX, 0f), -MaxX);
+
+			if (distanceToCenterLine > movingSphereRadius)
+			{
+				contactZ = 0f;
+				return false;
+			}
+
+			float longitudinalReach = (float)Math.Sqrt(
+				movingSphereRadius * movingSphereRadius - distanceToCenterLine * distanceToCenterLine
+			);
+			contactZ = MinZ - longitudinalReach;
+			return true;
+		}
 	}
 }

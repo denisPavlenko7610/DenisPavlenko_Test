@@ -6,10 +6,13 @@ namespace DenisPavlenko.Game.Core
 	public sealed class GameConfig : ScriptableObject
 	{
 		[Header("Ball")]
-		[SerializeField, Min(0.1f)] private float _initialBallRadius = 1f;
 		[SerializeField, Range(0.05f, 0.5f)] private float _criticalVolumeFraction = 0.2f;
 		[SerializeField, Min(0.01f)] private float _minimumShotRadius = 0.15f;
-		[SerializeField, Min(0.01f)] private float _shotGrowRate = 1.2f;
+		[SerializeField, Min(0.1f)] private float _maxChargeDuration = 3f;
+
+		[Header("Balance")]
+		[Tooltip("1.25 leaves 20% of the initial volume after all planned shots.")]
+		[SerializeField, Range(1.01f, 2f)] private float _safetyMargin = 1.25f;
 
 		[Header("Shot")]
 		[SerializeField, Min(0.1f)] private float _shotSpeed = 14f;
@@ -19,18 +22,19 @@ namespace DenisPavlenko.Game.Core
 		[Header("Movement")]
 		[SerializeField, Min(1f)] private float _trackWidthPerBallRadius = 2.6f;
 		[SerializeField, Min(0.1f)] private float _playerAdvanceSpeed = 9f;
+		[SerializeField, Min(0f)] private float _obstacleClearance = 0.15f;
 		[SerializeField, Min(0f)] private float _obstacleApproachDistance = 1.2f;
 
-		public float InitialBallRadius => _initialBallRadius;
 		public float CriticalVolumeFraction => _criticalVolumeFraction;
-		public float CriticalRadius => _initialBallRadius * VolumeMath.CubeRoot(_criticalVolumeFraction);
+		public float SafetyMargin => _safetyMargin;
 		public float MinShotRadius => _minimumShotRadius;
-		public float ShotGrowRate => _shotGrowRate;
+		public float MaxChargeDuration => _maxChargeDuration;
 		public float ShotSpeed => _shotSpeed;
 		public float BlastRadiusMultiplier => _blastRadiusMultiplier;
 		public float ObstacleExplosionDelay => _obstacleExplosionDelay;
 		public float TrackWidthPerBallRadius => _trackWidthPerBallRadius;
 		public float PlayerAdvanceSpeed => _playerAdvanceSpeed;
+		public float ObstacleClearance => _obstacleClearance;
 		public float ObstacleApproachDistance => _obstacleApproachDistance;
 	}
 }

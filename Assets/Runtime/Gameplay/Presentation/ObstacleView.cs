@@ -1,14 +1,23 @@
 using UnityEngine;
+using UnityTemplates.Attributes;
 using UnityTemplates.Tween;
 
 namespace DenisPavlenko.Game
 {
 	public sealed class ObstacleView : MonoBehaviour
 	{
-		[SerializeField] private Color _infectedColor = new(1f, 0.35f, 0.08f);
-		[SerializeField, Min(0.01f)] private float _animationDuration = 0.2f;
+		private const float DefaultAnimationDuration = 0.2f;
+		private static readonly Color DefaultInfectedColor = new(1f, 0.35f, 0.08f);
 
-		private Material[] _materials;
+		[SerializeField, Assign(AssignMode.Children)] private Renderer _renderer;
+		[SerializeField] private ObstacleVisualConfig _config;
+
+		private static readonly int TintPropertyId = Shader.PropertyToID("_BaseColor");
+
+		private MaterialPropertyBlock _propertyBlock;
+		private Color _infectedColor;
+		private float _animationDuration;
+		private Color _tint = Color.white;
 		private bool _exploding;
 
 		public float PositionZ => transform.position.z;
@@ -18,12 +27,9 @@ namespace DenisPavlenko.Game
 
 		private void Awake()
 		{
-			Renderer[] renderers = GetComponentsInChildren<Renderer>();
-			_materials = new Material[renderers.Length];
-			for (int index = 0; index < renderers.Length; index++)
-			{
-				_materials[index] = renderers[index].material;
-			}
+			_propertyBlock = new MaterialPropertyBlock();
+			_infectedColor = _config != null ? _config.InfectedColor : DefaultInfectedColor;
+			_animationDuration = _config != null ? _config.AnimationDuration : DefaultAnimationDuration;
 		}
 
 		public void Explode(float delay)
@@ -39,15 +45,19 @@ namespace DenisPavlenko.Game
 
 		private void PlayExplosion()
 		{
-			foreach (Material material in _materials)
-			{
-				Tween.To(material, () => material.color, value => material.color = value,
-					_infectedColor, _animationDuration).SetEase(EaseType.OutQuad);
-			}
+			Tween.To(this, () => _tint, ApplyTint, _infectedColor, _animationDuration)
+				.SetEase(EaseType.OutQuad);
 
 			transform.ScaleTo(Vector3.zero, _animationDuration)
 				.SetEase(EaseType.InBack)
 				.OnComplete(() => gameObject.SetActive(false));
+		}
+
+		private void ApplyTint(Color tint)
+		{
+			_tint = tint;
+			_propertyBlock.SetColor(TintPropertyId, tint);
+			_renderer.SetPropertyBlock(_propertyBlock);
 		}
 	}
 }

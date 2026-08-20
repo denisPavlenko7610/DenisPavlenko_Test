@@ -7,7 +7,7 @@ using VContainer;
 
 namespace DenisPavlenko.Game
 {
-	public sealed class GameWorldView : MonoBehaviour
+	public sealed partial class GameWorldView : MonoBehaviour
 	{
 		[SerializeField] private Transform _obstaclesRoot;
 		[SerializeField] private TrackView _track;
@@ -16,11 +16,13 @@ namespace DenisPavlenko.Game
 		[SerializeField] private Camera _camera;
 		[SerializeField] private Transform _cameraStart;
 		[SerializeField] private Transform _cameraLookAt;
+		[SerializeField] private ShotView _shotPrefab;
 
 		private GameConfig _config;
 		private PlayerBallView _player;
 		private ExplosionView _explosion;
 		private GameCameraRig _cameraRig;
+		private ShotView _shot;
 
 		public float TargetZ => _door.PositionZ;
 
@@ -48,6 +50,7 @@ namespace DenisPavlenko.Game
 		{
 			PresentPlayer(session);
 			PresentTrack(session);
+			PresentShot(session);
 			PresentHud(session);
 			PresentDoor(session);
 			PresentCamera(session);
@@ -62,6 +65,22 @@ namespace DenisPavlenko.Game
 		private void PresentTrack(GameSession session) =>
 			_track.SetWidth(_config.TrackWidthPerBallRadius * session.Ball.Radius);
 
+		private void PresentShot(GameSession session)
+		{
+			if (session.Phase == GamePhase.Charging)
+			{
+				GetShot().Show(session.Ball.ChargedShotRadius, session.PlayerZ);
+			}
+			else if (session.ShotActive)
+			{
+				GetShot().Set(session.ShotRadius, session.ShotZ);
+			}
+			else if (_shot != null)
+			{
+				_shot.Hide();
+			}
+		}
+
 		private void PresentHud(GameSession session) => _hud.SetVolumes(
 			session.PlayerVolumeFraction,
 			session.ShotVolumeFraction
@@ -72,6 +91,16 @@ namespace DenisPavlenko.Game
 		private void PresentCamera(GameSession session) => _cameraRig.Present(session.PlayerZ);
 
 		public void PulsePlayer() => _player.Pulse();
+
+		public void HideShot()
+		{
+			if (_shot != null)
+			{
+				_shot.Hide();
+			}
+		}
+
+		private ShotView GetShot() => _shot ??= Instantiate(_shotPrefab, transform);
 
 		public void PlayImpact(
 			float blastRadius,

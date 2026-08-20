@@ -11,6 +11,7 @@ namespace DenisPavlenko.Game
 		{
 			transform.position = new Vector3(0f, _height, z);
 			transform.localScale = Vector3.one * radius;
+
 			_particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 			_particles.Play(true);
 		}

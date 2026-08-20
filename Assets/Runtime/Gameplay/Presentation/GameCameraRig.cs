@@ -21,6 +21,7 @@ namespace DenisPavlenko.Game
 			Vector3 offset = Vector3.forward * playerZ;
 			Vector3 position = _start.position + offset;
 			Vector3 lookPoint = _lookAt.position + offset;
+
 			_camera.transform.SetPositionAndRotation(position, Quaternion.LookRotation(lookPoint - position));
 		}
 	}

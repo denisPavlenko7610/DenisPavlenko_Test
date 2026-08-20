@@ -8,17 +8,15 @@ using VContainer;
 
 namespace DenisPavlenko.Game
 {
-	public sealed partial class GameController : MonoBehaviour
+	public sealed class GameController : MonoBehaviour
 	{
-		[SerializeField] private ShotPool _shotPool;
-
 		private readonly List<ObstacleView> _obstacleViews = new();
+		private readonly ShootInput _input = new();
 
 		private ISceneFlow _sceneFlow;
 		private GameConfig _config;
 		private GameWorldView _world;
 		private GameSession _session;
-		private GameplayDriver _driver;
 
 		[Inject]
 		private void Construct(ISceneFlow sceneFlow, GameConfig config, GameWorldView world)
@@ -30,8 +28,6 @@ namespace DenisPavlenko.Game
 
 		public void Initialize()
 		{
-			ShotPresenter shotPresenter = new(_shotPool);
-
 			List<Obstacle> obstacles = new();
 			_world.CollectObstacles(_obstacleViews);
 			for (int id = 0; id < _obstacleViews.Count; id++)
@@ -40,14 +36,15 @@ namespace DenisPavlenko.Game
 				obstacles.Add(new Obstacle(id, view.PositionZ, view.CenterX, view.HalfWidth, view.HalfDepth));
 			}
 
-			_session = new GameSession(_config, new LevelLayout(obstacles, _world.TargetZ));
+			LevelLayout layout = new(obstacles, _world.TargetZ);
+			float startRadius = new LevelBalance(_config).ComputeStartRadius(layout);
+
+			_session = new GameSession(_config, layout, startRadius);
 			_session.ShotFired += OnShotFired;
 			_session.ObstaclesDestroyed += OnObstaclesDestroyed;
 			_session.Won += OnWon;
 			_session.Lost += OnLost;
 			_world.RestartRequested += Restart;
-
-			_driver = new GameplayDriver(_session, shotPresenter);
 
 			UpdatePresentation();
 		}
@@ -59,23 +56,44 @@ namespace DenisPavlenko.Game
 				return;
 			}
 
-			_driver.Tick(Time.deltaTime);
+			_input.Poll();
+			UpdateGameplay(Time.deltaTime);
 			UpdatePresentation();
+		}
+
+		private void UpdateGameplay(float deltaTime)
+		{
+			switch (_session.Phase)
+			{
+				case GamePhase.Idle when _input.PressedThisFrame:
+					_session.BeginCharge();
+					break;
+
+				case GamePhase.Charging when _input.IsPressed:
+					_session.TickCharge(deltaTime);
+					break;
+
+				case GamePhase.Charging:
+					_session.ReleaseShot();
+					break;
+
+				default:
+					_session.Tick(deltaTime);
+					break;
+			}
 		}
 
 		private void UpdatePresentation() => _world.Present(_session);
 
-		private void OnShotFired(float radius)
+		private void OnShotFired()
 		{
-			_driver.ShowFired(radius, _session.PlayerZ);
 			_world.PulsePlayer();
 		}
 
-		private void OnObstaclesDestroyed(IReadOnlyList<int> ids)
+		private void OnObstaclesDestroyed(float blastZ, float blastRadius, IReadOnlyList<int> ids)
 		{
-			_driver.HideShot();
-			float blastRadius = _session.ShotRadius * _config.BlastRadiusMultiplier;
-			_world.PlayImpact(blastRadius, _session.ShotZ, _obstacleViews, ids);
+			_world.HideShot();
+			_world.PlayImpact(blastRadius, blastZ, _obstacleViews, ids);
 		}
 
 		private void OnWon() => Finish(true);
@@ -84,7 +102,7 @@ namespace DenisPavlenko.Game
 
 		private void Finish(bool isWin)
 		{
-			_driver.HideShot();
+			_world.HideShot();
 			_world.ShowResult(isWin);
 		}
 
