@@ -5,7 +5,10 @@ namespace DenisPavlenko.Game.Core
 {
 	public sealed class LevelLayout
 	{
-		private readonly Dictionary<int, Obstacle> _byId = new();
+		private readonly Dictionary<int, Obstacle> _byId = new Dictionary<int, Obstacle>();
+
+		public float TargetZ { get; }
+		public IReadOnlyCollection<Obstacle> Obstacles => _byId.Values;
 
 		public LevelLayout(IEnumerable<Obstacle> obstacles, float targetZ)
 		{
@@ -25,9 +28,6 @@ namespace DenisPavlenko.Game.Core
 			}
 		}
 
-		public float TargetZ { get; }
-		public IReadOnlyCollection<Obstacle> Obstacles => _byId.Values;
-
 		public Obstacle FindNextBlockingObstacle(float fromZ, float movingSphereRadius)
 		{
 			Obstacle nearest = null;
@@ -35,16 +35,17 @@ namespace DenisPavlenko.Game.Core
 
 			foreach (Obstacle obstacle in _byId.Values)
 			{
-				if (obstacle.MaxZ <= fromZ ||
-					!obstacle.TryGetContactZ(movingSphereRadius, out float contactZ))
+				if (!obstacle.TryGetContactRange(
+						movingSphereRadius,
+						out float contactZ,
+						out float exitZ
+					) ||
+					exitZ <= fromZ)
 				{
 					continue;
 				}
 
-				if (contactZ < fromZ)
-				{
-					continue;
-				}
+				contactZ = Math.Max(fromZ, contactZ);
 
 				if (contactZ < nearestContactZ)
 				{
@@ -58,20 +59,15 @@ namespace DenisPavlenko.Game.Core
 
 		public IReadOnlyList<Obstacle> ObstaclesInRadius(float z, float radius)
 		{
-			List<Obstacle> hit = new();
+			List<Obstacle> hit = new List<Obstacle>();
 
 			foreach (Obstacle obstacle in _byId.Values)
 			{
-				float closestX = Math.Clamp(0f, obstacle.MinX, obstacle.MaxX);
-				float closestZ = Math.Clamp(
-					z,
-					obstacle.PositionZ - obstacle.HalfDepth,
-					obstacle.PositionZ + obstacle.HalfDepth
-				);
-				float dx = -closestX;
-				float dz = z - closestZ;
+				float dx = obstacle.CenterX;
+				float dz = obstacle.PositionZ - z;
+				float combinedRadius = radius + obstacle.FootprintRadius;
 
-				if (dx * dx + dz * dz <= radius * radius)
+				if (dx * dx + dz * dz <= combinedRadius * combinedRadius)
 				{
 					hit.Add(obstacle);
 				}
@@ -80,6 +76,14 @@ namespace DenisPavlenko.Game.Core
 			return hit;
 		}
 
-		public bool RemoveObstacle(int id) => _byId.Remove(id);
+		public bool RemoveObstacle(int id)
+		{
+			return _byId.Remove(id);
+		}
+
+		public bool MarkObstacleForRemoval(int id)
+		{
+			return _byId.TryGetValue(id, out Obstacle obstacle) && obstacle.MarkForRemoval();
+		}
 	}
 }

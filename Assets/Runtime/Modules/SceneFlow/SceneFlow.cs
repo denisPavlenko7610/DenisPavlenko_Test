@@ -7,14 +7,57 @@ namespace UnityTemplates.SceneFlow
 {
 	public sealed class SceneFlow : ISceneFlow
 	{
+
+		private sealed class EmptyTransition : ISceneTransition
+		{
+			public static readonly EmptyTransition Instance = new EmptyTransition();
+
+			public Awaitable CoverAsync(CancellationToken cancellationToken = default)
+			{
+				return Complete(cancellationToken);
+			}
+
+			public Awaitable RevealAsync(CancellationToken cancellationToken = default)
+			{
+				return Complete(cancellationToken);
+			}
+
+			private static Awaitable Complete(CancellationToken cancellationToken)
+			{
+				cancellationToken.ThrowIfCancellationRequested();
+				AwaitableCompletionSource source = new AwaitableCompletionSource();
+				Awaitable awaitable = source.Awaitable;
+				source.SetResult();
+				return awaitable;
+			}
+		}
+
+		private sealed class EmptyOperationScope : ISceneOperationScope
+		{
+			public static readonly EmptyOperationScope Instance = new EmptyOperationScope();
+
+			public IDisposable Enter()
+			{
+				return EmptyDisposable.Instance;
+			}
+		}
+
+		private sealed class EmptyDisposable : IDisposable
+		{
+			public static readonly EmptyDisposable Instance = new EmptyDisposable();
+
+			public void Dispose() { }
+		}
+
 		private const float SceneLoadReadyProgress = 0.9f;
 
 		private readonly SceneCatalog _catalog;
 		private readonly ISceneTransition _transition;
 		private readonly ISceneOperationScope _operationScope;
 
-		private bool _isBusy;
-		private float _progress;
+		public bool IsBusy { get; private set; }
+
+		public float Progress { get; private set; }
 
 		public SceneFlow(SceneCatalog catalog)
 			: this(catalog, EmptyTransition.Instance, EmptyOperationScope.Instance) { }
@@ -28,145 +71,6 @@ namespace UnityTemplates.SceneFlow
 			_transition = transition ?? throw new ArgumentNullException(nameof(transition));
 			_operationScope = operationScope ?? throw new ArgumentNullException(nameof(operationScope));
 			_catalog.ThrowIfInvalid();
-		}
-
-		public bool IsBusy => _isBusy;
-
-		public float Progress => _progress;
-
-		public event Action<float> ProgressChanged;
-
-		public async Awaitable ChangeSceneAsync(string sceneId, CancellationToken cancellationToken = default)
-		{
-			await SwitchToMainThreadAsync(cancellationToken);
-
-			EnsureNotBusy();
-
-			string scenePath = _catalog.GetPath(sceneId);
-
-			if (IsSceneSingleActive(scenePath))
-			{
-				return;
-			}
-
-			await ChangeSceneInternalAsync(scenePath, cancellationToken);
-		}
-
-		public async Awaitable ReloadActiveSceneAsync(CancellationToken cancellationToken = default)
-		{
-			await SwitchToMainThreadAsync(cancellationToken);
-
-			EnsureNotBusy();
-
-			Scene activeScene = SceneManager.GetActiveScene();
-
-			if (!activeScene.IsValid())
-			{
-				throw new InvalidOperationException("There is no valid active scene.");
-			}
-
-			if (string.IsNullOrWhiteSpace(activeScene.path))
-			{
-				throw new InvalidOperationException("The active scene does not have a valid asset path.");
-			}
-
-			await ChangeSceneInternalAsync(activeScene.path, cancellationToken);
-		}
-
-		public async Awaitable LoadAdditiveAsync(
-			string sceneId,
-			bool setActive = false,
-			CancellationToken cancellationToken = default
-		)
-		{
-			await SwitchToMainThreadAsync(cancellationToken);
-
-			EnsureNotBusy();
-
-			string scenePath = _catalog.GetPath(sceneId);
-
-			Scene loadedScene = SceneManager.GetSceneByPath(scenePath);
-
-			if (loadedScene.IsValid() && loadedScene.isLoaded)
-			{
-				if (setActive)
-				{
-					SetActiveScene(loadedScene);
-				}
-
-				return;
-			}
-
-			cancellationToken.ThrowIfCancellationRequested();
-
-			await RunSceneOperationAsync(
-				() => LoadSceneInternalAsync(scenePath, LoadSceneMode.Additive, setActive)
-			);
-		}
-
-		public async Awaitable UnloadAsync(
-			string sceneId,
-			string fallbackActiveSceneId = null,
-			CancellationToken cancellationToken = default
-		)
-		{
-			await SwitchToMainThreadAsync(cancellationToken);
-
-			EnsureNotBusy();
-
-			string scenePath = _catalog.GetPath(sceneId);
-
-			Scene scene = SceneManager.GetSceneByPath(scenePath);
-
-			if (!scene.IsValid() || !scene.isLoaded)
-			{
-				return;
-			}
-
-			cancellationToken.ThrowIfCancellationRequested();
-
-			await RunSceneOperationAsync(async () =>
-				{
-					if (scene == SceneManager.GetActiveScene())
-					{
-						SetFallbackActiveScene(sceneId, fallbackActiveSceneId);
-					}
-
-					AsyncOperation operation = SceneManager.UnloadSceneAsync(scene);
-
-					if (operation == null)
-					{
-						throw new InvalidOperationException($"Failed to unload scene '{sceneId}'.");
-					}
-
-					await TrackOperationProgressAsync(operation);
-				}
-			);
-		}
-
-		public void SetActive(string sceneId)
-		{
-			EnsureNotBusy();
-
-			string scenePath = _catalog.GetPath(sceneId);
-
-			Scene scene = SceneManager.GetSceneByPath(scenePath);
-
-			if (!scene.IsValid() || !scene.isLoaded)
-			{
-				throw new InvalidOperationException($"Scene '{sceneId}' is not loaded.");
-			}
-
-			SetActiveScene(scene);
-		}
-
-		public bool IsLoaded(string sceneId)
-		{
-			string scenePath = _catalog.GetPath(sceneId);
-
-			Scene scene = SceneManager.GetSceneByPath(scenePath);
-
-			return scene.IsValid() && scene.isLoaded;
 		}
 
 		private async Awaitable ChangeSceneInternalAsync(string scenePath, CancellationToken cancellationToken)
@@ -183,7 +87,7 @@ namespace UnityTemplates.SceneFlow
 
 						cancellationToken.ThrowIfCancellationRequested();
 
-						await LoadSceneInternalAsync(scenePath, LoadSceneMode.Single, setActive: true);
+						await LoadSceneInternalAsync(scenePath, LoadSceneMode.Single, true);
 					}
 					finally
 					{
@@ -251,7 +155,8 @@ namespace UnityTemplates.SceneFlow
 			if (string.IsNullOrWhiteSpace(fallbackSceneId))
 			{
 				throw new InvalidOperationException(
-					$"Scene '{sceneId}' is active. Provide a fallback active scene before unloading it.");
+					$"Scene '{sceneId}' is active. Provide a fallback active scene before unloading it."
+				);
 			}
 
 			string fallbackPath = _catalog.GetPath(fallbackSceneId);
@@ -263,6 +168,182 @@ namespace UnityTemplates.SceneFlow
 			}
 
 			SetActiveScene(fallbackScene);
+		}
+
+		private async Awaitable RunSceneOperationAsync(Func<Awaitable> operation)
+		{
+			BeginOperation();
+
+			try
+			{
+				using (_operationScope.Enter())
+				{
+					await operation();
+				}
+			}
+			finally
+			{
+				EndOperation();
+			}
+		}
+
+		private void BeginOperation()
+		{
+			EnsureNotBusy();
+			IsBusy = true;
+			SetProgress(0f);
+		}
+
+		private void EndOperation()
+		{
+			IsBusy = false;
+		}
+
+		private void EnsureNotBusy()
+		{
+			if (IsBusy)
+			{
+				throw new InvalidOperationException("Another scene operation is already running.");
+			}
+		}
+
+		private void SetProgress(float progress)
+		{
+			Progress = Mathf.Clamp01(progress);
+			ProgressChanged?.Invoke(Progress);
+		}
+
+		public event Action<float> ProgressChanged;
+
+		public async Awaitable ChangeSceneAsync(string sceneId, CancellationToken cancellationToken = default)
+		{
+			await SwitchToMainThreadAsync(cancellationToken);
+
+			EnsureNotBusy();
+
+			string scenePath = _catalog.GetPath(sceneId);
+
+			if (IsSceneSingleActive(scenePath))
+			{
+				return;
+			}
+
+			await ChangeSceneInternalAsync(scenePath, cancellationToken);
+		}
+
+		public async Awaitable ReloadActiveSceneAsync(CancellationToken cancellationToken = default)
+		{
+			await SwitchToMainThreadAsync(cancellationToken);
+
+			EnsureNotBusy();
+
+			Scene activeScene = SceneManager.GetActiveScene();
+
+			if (!activeScene.IsValid())
+			{
+				throw new InvalidOperationException("There is no valid active scene.");
+			}
+
+			if (string.IsNullOrWhiteSpace(activeScene.path))
+			{
+				throw new InvalidOperationException("The active scene does not have a valid asset path.");
+			}
+
+			await ChangeSceneInternalAsync(activeScene.path, cancellationToken);
+		}
+
+		public async Awaitable LoadAdditiveAsync(
+			string sceneId,
+			bool setActive = false,
+			CancellationToken cancellationToken = default
+		)
+		{
+			await SwitchToMainThreadAsync(cancellationToken);
+
+			EnsureNotBusy();
+
+			string scenePath = _catalog.GetPath(sceneId);
+
+			Scene loadedScene = SceneManager.GetSceneByPath(scenePath);
+
+			if (loadedScene.IsValid() && loadedScene.isLoaded)
+			{
+				if (setActive)
+				{
+					SetActiveScene(loadedScene);
+				}
+
+				return;
+			}
+
+			cancellationToken.ThrowIfCancellationRequested();
+
+			await RunSceneOperationAsync(() => LoadSceneInternalAsync(scenePath, LoadSceneMode.Additive, setActive));
+		}
+
+		public async Awaitable UnloadAsync(
+			string sceneId,
+			string fallbackActiveSceneId = null,
+			CancellationToken cancellationToken = default
+		)
+		{
+			await SwitchToMainThreadAsync(cancellationToken);
+
+			EnsureNotBusy();
+
+			string scenePath = _catalog.GetPath(sceneId);
+
+			Scene scene = SceneManager.GetSceneByPath(scenePath);
+
+			if (!scene.IsValid() || !scene.isLoaded)
+			{
+				return;
+			}
+
+			cancellationToken.ThrowIfCancellationRequested();
+
+			await RunSceneOperationAsync(async () =>
+				{
+					if (scene == SceneManager.GetActiveScene())
+					{
+						SetFallbackActiveScene(sceneId, fallbackActiveSceneId);
+					}
+
+					AsyncOperation operation = SceneManager.UnloadSceneAsync(scene);
+
+					if (operation == null)
+					{
+						throw new InvalidOperationException($"Failed to unload scene '{sceneId}'.");
+					}
+
+					await TrackOperationProgressAsync(operation);
+				}
+			);
+		}
+
+		public void SetActive(string sceneId)
+		{
+			EnsureNotBusy();
+
+			string scenePath = _catalog.GetPath(sceneId);
+
+			Scene scene = SceneManager.GetSceneByPath(scenePath);
+
+			if (!scene.IsValid() || !scene.isLoaded)
+			{
+				throw new InvalidOperationException($"Scene '{sceneId}' is not loaded.");
+			}
+
+			SetActiveScene(scene);
+		}
+
+		public bool IsLoaded(string sceneId)
+		{
+			string scenePath = _catalog.GetPath(sceneId);
+
+			Scene scene = SceneManager.GetSceneByPath(scenePath);
+
+			return scene.IsValid() && scene.isLoaded;
 		}
 
 		private static void SetActiveScene(Scene scene)
@@ -287,9 +368,9 @@ namespace UnityTemplates.SceneFlow
 
 			Scene activeScene = SceneManager.GetActiveScene();
 
-			return activeScene.IsValid()
-				&& activeScene.isLoaded
-				&& string.Equals(activeScene.path, scenePath, StringComparison.OrdinalIgnoreCase);
+			return activeScene.IsValid() &&
+				activeScene.isLoaded &&
+				string.Equals(activeScene.path, scenePath, StringComparison.OrdinalIgnoreCase);
 		}
 
 		private static async Awaitable SwitchToMainThreadAsync(CancellationToken cancellationToken)
@@ -299,81 +380,6 @@ namespace UnityTemplates.SceneFlow
 			await Awaitable.MainThreadAsync();
 
 			cancellationToken.ThrowIfCancellationRequested();
-		}
-
-		private async Awaitable RunSceneOperationAsync(Func<Awaitable> operation)
-		{
-			BeginOperation();
-
-			try
-			{
-				using (_operationScope.Enter())
-				{
-					await operation();
-				}
-			}
-			finally
-			{
-				EndOperation();
-			}
-		}
-
-		private void BeginOperation()
-		{
-			EnsureNotBusy();
-			_isBusy = true;
-			SetProgress(0f);
-		}
-
-		private void EndOperation()
-		{
-			_isBusy = false;
-		}
-
-		private void EnsureNotBusy()
-		{
-			if (_isBusy)
-			{
-				throw new InvalidOperationException("Another scene operation is already running.");
-			}
-		}
-
-		private void SetProgress(float progress)
-		{
-			_progress = Mathf.Clamp01(progress);
-			ProgressChanged?.Invoke(_progress);
-		}
-
-		private sealed class EmptyTransition : ISceneTransition
-		{
-			public static readonly EmptyTransition Instance = new();
-
-			public Awaitable CoverAsync(CancellationToken cancellationToken = default) => Complete(cancellationToken);
-
-			public Awaitable RevealAsync(CancellationToken cancellationToken = default) => Complete(cancellationToken);
-
-			private static Awaitable Complete(CancellationToken cancellationToken)
-			{
-				cancellationToken.ThrowIfCancellationRequested();
-				AwaitableCompletionSource source = new();
-				Awaitable awaitable = source.Awaitable;
-				source.SetResult();
-				return awaitable;
-			}
-		}
-
-		private sealed class EmptyOperationScope : ISceneOperationScope
-		{
-			public static readonly EmptyOperationScope Instance = new();
-
-			public IDisposable Enter() => EmptyDisposable.Instance;
-		}
-
-		private sealed class EmptyDisposable : IDisposable
-		{
-			public static readonly EmptyDisposable Instance = new();
-
-			public void Dispose() { }
 		}
 	}
 }

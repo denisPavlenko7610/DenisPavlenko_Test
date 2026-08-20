@@ -4,8 +4,8 @@ namespace UnityTemplates.Foundation
 {
 	public static class AwaitableExtensions
 	{
-		public static Awaitable Completed => _completed ??= GetCompletedAwaitable();
 		private static Awaitable _completed;
+		public static Awaitable Completed => _completed ??= GetCompletedAwaitable();
 
 		public static Awaitable GetCompletedAwaitable()
 		{

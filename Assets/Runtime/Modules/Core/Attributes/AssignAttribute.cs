@@ -11,14 +11,15 @@ namespace UnityTemplates.Attributes
 		Scene = 3
 	}
 
-	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
+	[AttributeUsage(AttributeTargets.Field)]
 	public sealed class AssignAttribute : PropertyAttribute
 	{
+
+		public AssignMode Mode { get; }
+
 		public AssignAttribute(AssignMode mode = AssignMode.Self)
 		{
 			Mode = mode;
 		}
-
-		public AssignMode Mode { get; }
 	}
 }

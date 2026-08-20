@@ -5,12 +5,20 @@ namespace DenisPavlenko.Game.Core
 	public sealed class PlayerBall
 	{
 		private readonly GameConfig _config;
-		private readonly float _initialRadius;
 		private readonly float _initialVolume;
 		private readonly float _criticalVolume;
 		private float _remainingMass;
-		private float _radius;
 		private float _chargeElapsed;
+		private float _chargeStartRadius;
+
+		public float Radius { get; private set; }
+		public float InitialRadius { get; }
+		public float VolumeFraction => VolumeMath.Cube(Radius) / _initialVolume;
+		public float ChargedShotVolumeFraction => VolumeMath.Cube(ChargedShotRadius) / _initialVolume;
+		public bool IsCriticallySmall => VolumeMath.Cube(Radius) <= _criticalVolume;
+		public float ChargedShotRadius { get; private set; }
+
+		public float MaxShotRadius => VolumeMath.CubeRoot(Math.Max(0f, _remainingMass - _criticalVolume));
 
 		public PlayerBall(GameConfig config, float initialRadius)
 		{
@@ -21,27 +29,20 @@ namespace DenisPavlenko.Game.Core
 				throw new ArgumentOutOfRangeException(nameof(initialRadius));
 			}
 
-			_initialRadius = initialRadius;
-			_radius = initialRadius;
-			_initialVolume = VolumeMath.Cube(_radius);
+			InitialRadius = initialRadius;
+			Radius = initialRadius;
+			_initialVolume = VolumeMath.Cube(Radius);
 			_criticalVolume = _initialVolume * _config.CriticalVolumeFraction;
 			_remainingMass = _initialVolume;
 		}
 
-		public float Radius => _radius;
-		public float InitialRadius => _initialRadius;
-		public float VolumeFraction => VolumeMath.Cube(_radius) / _initialVolume;
-		public float ChargedShotVolumeFraction => VolumeMath.Cube(ChargedShotRadius) / _initialVolume;
-		public bool IsCriticallySmall => VolumeMath.Cube(_radius) <= _criticalVolume;
-		public float ChargedShotRadius { get; private set; }
-
-		public float MaxShotRadius => VolumeMath.CubeRoot(Math.Max(0f, _remainingMass - _criticalVolume));
-
 		public void BeginCharge()
 		{
 			_chargeElapsed = 0f;
-			ChargedShotRadius = 0f;
-			_radius = VolumeMath.CubeRoot(_remainingMass);
+			float chargedVolume = GetMinimumShotVolume();
+			ChargedShotRadius = VolumeMath.CubeRoot(chargedVolume);
+			Radius = VolumeMath.CubeRoot(_remainingMass - chargedVolume);
+			_chargeStartRadius = Radius;
 		}
 
 		public void Charge(float deltaTime, out bool overcharged)
@@ -55,16 +56,17 @@ namespace DenisPavlenko.Game.Core
 			_chargeElapsed += deltaTime;
 			float chargeProgress = Math.Min(1f, _chargeElapsed / _config.MaxChargeDuration);
 
-			ChargedShotRadius = MaxShotRadius * chargeProgress;
-			float chargedVolume = VolumeMath.Cube(ChargedShotRadius);
-			_radius = VolumeMath.CubeRoot(Math.Max(_criticalVolume, _remainingMass - chargedVolume));
+			Radius = _chargeStartRadius +
+				(VolumeMath.CubeRoot(_criticalVolume) - _chargeStartRadius) * chargeProgress;
+			float chargedVolume = _remainingMass - VolumeMath.Cube(Radius);
+			ChargedShotRadius = VolumeMath.CubeRoot(Math.Max(0f, chargedVolume));
 			overcharged = chargeProgress >= 1f;
 		}
 
 		public float ConsumeShot()
 		{
 			float fired = ChargedShotRadius;
-			_remainingMass = VolumeMath.Cube(_radius);
+			_remainingMass = VolumeMath.Cube(Radius);
 			ChargedShotRadius = 0f;
 			_chargeElapsed = 0f;
 			return fired;
@@ -74,7 +76,15 @@ namespace DenisPavlenko.Game.Core
 		{
 			ChargedShotRadius = 0f;
 			_chargeElapsed = 0f;
-			_radius = VolumeMath.CubeRoot(_remainingMass);
+			Radius = VolumeMath.CubeRoot(_remainingMass);
+		}
+
+		private float GetMinimumShotVolume()
+		{
+			return Math.Min(
+				VolumeMath.Cube(_config.MinShotRadius),
+				Math.Max(0f, _remainingMass - _criticalVolume)
+			);
 		}
 	}
 }

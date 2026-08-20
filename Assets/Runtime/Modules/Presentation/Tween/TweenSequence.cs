@@ -15,15 +15,15 @@ namespace UnityTemplates.Tween
 			public float End;
 		}
 
-		private readonly List<Item> _items = new();
+		private readonly List<Item> _items = new List<Item>();
 
 		private float _duration;
 
 		private float _lastAppendStart;
 
-		internal TweenSequence() { }
-
 		public override float Duration => _duration;
+
+		internal TweenSequence() { }
 
 		public TweenSequence Append(TweenCore tween)
 		{

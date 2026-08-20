@@ -6,18 +6,16 @@ namespace UnityTemplates.Tween
 {
 	public abstract class TweenCore
 	{
+
+		private const int InfiniteLoops = -1;
+
+		private const double TimeEpsilon = 0.0000001d;
 		private bool _prepared;
-		private bool _started;
-		private bool _sequenceOwned;
 
 		private Action _onStart;
 		private Action _onUpdate;
 		private Action _onComplete;
 		private Action _onKill;
-
-		private const int InfiniteLoops = -1;
-
-		private const double TimeEpsilon = 0.0000001d;
 
 		public abstract float Duration { get; }
 
@@ -68,9 +66,9 @@ namespace UnityTemplates.Tween
 
 		public float NormalizedPosition => ResolveNormalized(Elapsed);
 
-		internal bool IsSequenceOwned => _sequenceOwned;
+		internal bool IsSequenceOwned { get; private set; }
 
-		internal bool HasStarted => _started;
+		internal bool HasStarted { get; private set; }
 
 		internal double SequenceDuration => Delay + Duration;
 
@@ -166,17 +164,25 @@ namespace UnityTemplates.Tween
 			return this;
 		}
 
-		public TweenCore OnStart(Action callback) =>
-			AttachCallback(ref _onStart, callback, nameof(callback));
+		public TweenCore OnStart(Action callback)
+		{
+			return AttachCallback(ref _onStart, callback, nameof(callback));
+		}
 
-		public TweenCore OnUpdate(Action callback) =>
-			AttachCallback(ref _onUpdate, callback, nameof(callback));
+		public TweenCore OnUpdate(Action callback)
+		{
+			return AttachCallback(ref _onUpdate, callback, nameof(callback));
+		}
 
-		public TweenCore OnComplete(Action callback) =>
-			AttachCallback(ref _onComplete, callback, nameof(callback));
+		public TweenCore OnComplete(Action callback)
+		{
+			return AttachCallback(ref _onComplete, callback, nameof(callback));
+		}
 
-		public TweenCore OnKill(Action callback) =>
-			AttachCallback(ref _onKill, callback, nameof(callback));
+		public TweenCore OnKill(Action callback)
+		{
+			return AttachCallback(ref _onKill, callback, nameof(callback));
+		}
 
 		public TweenCore Play()
 		{
@@ -261,7 +267,7 @@ namespace UnityTemplates.Tween
 
 			LoopsDone = 0;
 
-			_started = false;
+			HasStarted = false;
 
 			if (_prepared)
 			{
@@ -298,7 +304,7 @@ namespace UnityTemplates.Tween
 
 			EnsurePrepared();
 
-			_started = true;
+			HasStarted = true;
 
 			float clamped = Mathf.Clamp(time, 0f, Duration);
 
@@ -335,9 +341,21 @@ namespace UnityTemplates.Tween
 			return Goto(Duration * Mathf.Clamp01(normalizedPosition), play);
 		}
 
+		protected void EnsureCanConfigure()
+		{
+			EnsureNotKilled();
+
+			if (HasStarted)
+			{
+				throw new InvalidOperationException(
+					"Tween configuration cannot be changed after playback has started."
+				);
+			}
+		}
+
 		internal bool Tick(float deltaTime)
 		{
-			if (_sequenceOwned || State == TweenState.Completed || State == TweenState.Killed)
+			if (IsSequenceOwned || State == TweenState.Completed || State == TweenState.Killed)
 			{
 				return false;
 			}
@@ -380,11 +398,11 @@ namespace UnityTemplates.Tween
 				next = Math.Min(next, totalDuration);
 			}
 
-			if (!_started && next >= Delay)
+			if (!HasStarted && next >= Delay)
 			{
 				EnsurePrepared();
 
-				_started = true;
+				HasStarted = true;
 
 				InvokeSafely(_onStart);
 
@@ -396,7 +414,7 @@ namespace UnityTemplates.Tween
 
 			Elapsed = next;
 
-			if (_started)
+			if (HasStarted)
 			{
 				LoopsDone = CalculateLoopsDone(Elapsed);
 
@@ -432,12 +450,12 @@ namespace UnityTemplates.Tween
 
 		internal void AttachToSequence()
 		{
-			if (_sequenceOwned)
+			if (IsSequenceOwned)
 			{
 				throw new InvalidOperationException("The tween already belongs to a sequence.");
 			}
 
-			if (_started)
+			if (HasStarted)
 			{
 				throw new InvalidOperationException("A tween cannot be added to a sequence after it has started.");
 			}
@@ -455,19 +473,19 @@ namespace UnityTemplates.Tween
 			if (HasCallbacks())
 			{
 				throw new InvalidOperationException(
-					"Child tween callbacks are not supported inside a sequence. "
-					+ "Attach callbacks to the sequence instead."
+					"Child tween callbacks are not supported inside a sequence. " +
+					"Attach callbacks to the sequence instead."
 				);
 			}
 
-			_sequenceOwned = true;
+			IsSequenceOwned = true;
 
 			State = TweenState.Paused;
 		}
 
 		internal void EvaluateFromSequence(double sequenceTime)
 		{
-			if (!_sequenceOwned)
+			if (!IsSequenceOwned)
 			{
 				throw new InvalidOperationException("Only sequence-owned tweens can be evaluated by a sequence.");
 			}
@@ -491,7 +509,7 @@ namespace UnityTemplates.Tween
 
 				EnsurePrepared();
 
-				_started = true;
+				HasStarted = true;
 
 				EvaluateTween(1f);
 
@@ -510,7 +528,7 @@ namespace UnityTemplates.Tween
 
 			EnsurePrepared();
 
-			_started = true;
+			HasStarted = true;
 
 			double activeTime = sequenceTime - Delay;
 
@@ -518,22 +536,6 @@ namespace UnityTemplates.Tween
 
 			EvaluateTween(normalized);
 		}
-
-		protected void EnsureCanConfigure()
-		{
-			EnsureNotKilled();
-
-			if (_started)
-			{
-				throw new InvalidOperationException(
-					"Tween configuration cannot be changed after playback has started."
-				);
-			}
-		}
-
-		protected abstract void PrepareTween();
-
-		protected abstract void EvaluateTween(float normalizedPosition);
 
 		private void CompleteInternal(bool withCallbacks)
 		{
@@ -544,9 +546,9 @@ namespace UnityTemplates.Tween
 
 			EnsurePrepared();
 
-			if (!_started)
+			if (!HasStarted)
 			{
-				_started = true;
+				HasStarted = true;
 
 				InvokeSafely(_onStart);
 
@@ -608,7 +610,7 @@ namespace UnityTemplates.Tween
 
 		private int CalculateLoopsDone(double elapsed)
 		{
-			if (!_started)
+			if (!HasStarted)
 			{
 				return 0;
 			}
@@ -636,7 +638,7 @@ namespace UnityTemplates.Tween
 
 		private float ResolveNormalized(double elapsed)
 		{
-			if (!_started && !_prepared)
+			if (!HasStarted && !_prepared)
 			{
 				return 0f;
 			}
@@ -701,7 +703,7 @@ namespace UnityTemplates.Tween
 		{
 			EnsureNotKilled();
 
-			if (_sequenceOwned)
+			if (IsSequenceOwned)
 			{
 				throw new InvalidOperationException(
 					"Callbacks must be attached to the owning sequence, not to a child tween."
@@ -720,7 +722,7 @@ namespace UnityTemplates.Tween
 
 		private void EnsureStandaloneControl()
 		{
-			if (_sequenceOwned)
+			if (IsSequenceOwned)
 			{
 				throw new InvalidOperationException("A tween owned by a sequence cannot be controlled directly.");
 			}
@@ -738,6 +740,10 @@ namespace UnityTemplates.Tween
 		{
 			return Target is UnityEngine.Object unityObject && unityObject == null;
 		}
+
+		protected abstract void PrepareTween();
+
+		protected abstract void EvaluateTween(float normalizedPosition);
 
 		private static void InvokeSafely(Action callback)
 		{

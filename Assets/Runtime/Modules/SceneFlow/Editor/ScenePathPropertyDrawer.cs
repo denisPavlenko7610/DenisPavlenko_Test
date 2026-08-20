@@ -26,7 +26,7 @@ namespace UnityTemplates.SceneFlow.Editor
 				label,
 				current,
 				typeof(SceneAsset),
-				allowSceneObjects: false
+				false
 			);
 
 			if (EditorGUI.EndChangeCheck())

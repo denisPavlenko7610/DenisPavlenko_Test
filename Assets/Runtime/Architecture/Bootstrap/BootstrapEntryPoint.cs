@@ -1,9 +1,9 @@
 using System;
 using UnityEngine;
-using VContainer;
-using VContainer.Unity;
 using UnityTemplates.Foundation;
 using UnityTemplates.SceneFlow;
+using VContainer;
+using VContainer.Unity;
 
 namespace DenisPavlenko.Project.Architecture
 {
@@ -17,11 +17,6 @@ namespace DenisPavlenko.Project.Architecture
 			_sceneFlow = sceneFlow;
 		}
 
-		public void Start()
-		{
-			_ = LoadGameAsync();
-		}
-
 		private async Awaitable LoadGameAsync()
 		{
 			try
@@ -32,6 +27,11 @@ namespace DenisPavlenko.Project.Architecture
 			{
 				UnityLogger.LogException(exception);
 			}
+		}
+
+		public void Start()
+		{
+			_ = LoadGameAsync();
 		}
 	}
 }

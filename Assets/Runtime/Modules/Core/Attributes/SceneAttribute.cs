@@ -3,6 +3,6 @@ using UnityEngine;
 
 namespace UnityTemplates.Attributes
 {
-	[AttributeUsage(AttributeTargets.Field, AllowMultiple = false, Inherited = true)]
+	[AttributeUsage(AttributeTargets.Field)]
 	public sealed class SceneAttribute : PropertyAttribute { }
 }

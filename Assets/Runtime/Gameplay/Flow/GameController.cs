@@ -10,44 +10,13 @@ namespace DenisPavlenko.Game
 {
 	public sealed class GameController : MonoBehaviour
 	{
-		private readonly List<ObstacleView> _obstacleViews = new();
-		private readonly ShootInput _input = new();
+		private readonly List<ObstacleView> _obstacleViews = new List<ObstacleView>();
+		private readonly ShootInput _input = new ShootInput();
 
 		private ISceneFlow _sceneFlow;
 		private GameConfig _config;
 		private GameWorldView _world;
 		private GameSession _session;
-
-		[Inject]
-		private void Construct(ISceneFlow sceneFlow, GameConfig config, GameWorldView world)
-		{
-			_sceneFlow = sceneFlow;
-			_config = config;
-			_world = world;
-		}
-
-		public void Initialize()
-		{
-			List<Obstacle> obstacles = new();
-			_world.CollectObstacles(_obstacleViews);
-			for (int id = 0; id < _obstacleViews.Count; id++)
-			{
-				ObstacleView view = _obstacleViews[id];
-				obstacles.Add(new Obstacle(id, view.PositionZ, view.CenterX, view.HalfWidth, view.HalfDepth));
-			}
-
-			LevelLayout layout = new(obstacles, _world.TargetZ);
-			float startRadius = new LevelBalance(_config).ComputeStartRadius(layout);
-
-			_session = new GameSession(_config, layout, startRadius);
-			_session.ShotFired += OnShotFired;
-			_session.ObstaclesDestroyed += OnObstaclesDestroyed;
-			_session.Won += OnWon;
-			_session.Lost += OnLost;
-			_world.RestartRequested += Restart;
-
-			UpdatePresentation();
-		}
 
 		private void Update()
 		{
@@ -61,8 +30,55 @@ namespace DenisPavlenko.Game
 			UpdatePresentation();
 		}
 
+		private void OnDestroy()
+		{
+			if (_session == null)
+			{
+				return;
+			}
+
+			_session.ShotFired -= OnShotFired;
+			_session.ObstaclesDestroyed -= OnObstaclesDestroyed;
+			_session.Won -= OnWon;
+			_session.Lost -= OnLost;
+			_world.RestartRequested -= Restart;
+		}
+
+		public void Initialize()
+		{
+			List<Obstacle> obstacles = new List<Obstacle>();
+			_world.CollectObstacles(_obstacleViews);
+			for (int id = 0; id < _obstacleViews.Count; id++)
+			{
+				ObstacleView view = _obstacleViews[id];
+				obstacles.Add(new Obstacle(id, view.PositionZ, view.CenterX, view.HalfWidth, view.HalfDepth));
+			}
+
+			LevelLayout layout = new LevelLayout(obstacles, _world.TargetZ);
+			float startRadius = new LevelBalance(_config).ComputeStartRadius(layout);
+
+			_session = new GameSession(_config, layout, startRadius);
+			_session.ShotFired += OnShotFired;
+			_session.ObstaclesDestroyed += OnObstaclesDestroyed;
+			_session.Won += OnWon;
+			_session.Lost += OnLost;
+			_world.RestartRequested += Restart;
+
+			UpdatePresentation();
+		}
+
+		[Inject]
+		private void Construct(ISceneFlow sceneFlow, GameConfig config, GameWorldView world)
+		{
+			_sceneFlow = sceneFlow;
+			_config = config;
+			_world = world;
+		}
+
 		private void UpdateGameplay(float deltaTime)
 		{
+			_session.Tick(deltaTime);
+
 			switch (_session.Phase)
 			{
 				case GamePhase.Idle when _input.PressedThisFrame:
@@ -76,14 +92,13 @@ namespace DenisPavlenko.Game
 				case GamePhase.Charging:
 					_session.ReleaseShot();
 					break;
-
-				default:
-					_session.Tick(deltaTime);
-					break;
 			}
 		}
 
-		private void UpdatePresentation() => _world.Present(_session);
+		private void UpdatePresentation()
+		{
+			_world.Present(_session);
+		}
 
 		private void OnShotFired()
 		{
@@ -92,13 +107,24 @@ namespace DenisPavlenko.Game
 
 		private void OnObstaclesDestroyed(float blastZ, float blastRadius, IReadOnlyList<int> ids)
 		{
-			_world.HideShot();
-			_world.PlayImpact(blastRadius, blastZ, _obstacleViews, ids);
+			_world.PlayImpact(
+				blastRadius,
+				blastZ,
+				_obstacleViews,
+				ids,
+				ids.Count > 0 ? () => _session.CompleteObstacleDestruction(ids) : null
+			);
 		}
 
-		private void OnWon() => Finish(true);
+		private void OnWon()
+		{
+			Finish(true);
+		}
 
-		private void OnLost() => Finish(false);
+		private void OnLost()
+		{
+			Finish(false);
+		}
 
 		private void Finish(bool isWin)
 		{
@@ -124,20 +150,6 @@ namespace DenisPavlenko.Game
 			{
 				UnityLogger.LogException(exception, this);
 			}
-		}
-
-		private void OnDestroy()
-		{
-			if (_session == null)
-			{
-				return;
-			}
-
-			_session.ShotFired -= OnShotFired;
-			_session.ObstaclesDestroyed -= OnObstaclesDestroyed;
-			_session.Won -= OnWon;
-			_session.Lost -= OnLost;
-			_world.RestartRequested -= Restart;
 		}
 	}
 }

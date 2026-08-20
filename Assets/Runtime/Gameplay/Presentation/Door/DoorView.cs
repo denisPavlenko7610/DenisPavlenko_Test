@@ -31,8 +31,10 @@ namespace DenisPavlenko.Game
 			}
 
 			_opened = true;
-			_leftPanel.LocalMoveTo(_leftStart + Vector3.left * _panelTravelDistance, _openDuration).SetEase(EaseType.OutBack);
-			_rightPanel.LocalMoveTo(_rightStart + Vector3.right * _panelTravelDistance, _openDuration).SetEase(EaseType.OutBack);
+			_leftPanel.LocalMoveTo(_leftStart + Vector3.left * _panelTravelDistance, _openDuration)
+				.SetEase(EaseType.OutBack);
+			_rightPanel.LocalMoveTo(_rightStart + Vector3.right * _panelTravelDistance, _openDuration)
+				.SetEase(EaseType.OutBack);
 		}
 	}
 }

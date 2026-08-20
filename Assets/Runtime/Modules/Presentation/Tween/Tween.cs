@@ -5,6 +5,16 @@ namespace UnityTemplates.Tween
 {
 	public static class Tween
 	{
+
+		private sealed class DelayTween : TweenCore
+		{
+			public override float Duration => 0f;
+
+			protected override void PrepareTween() { }
+
+			protected override void EvaluateTween(float normalizedPosition) { }
+		}
+
 		public static PropertyTween<float> To(
 			object target,
 			Func<float> getter,
@@ -141,8 +151,8 @@ namespace UnityTemplates.Tween
 		}
 
 		/// <summary>
-		/// Sequences are created paused so their timeline can be
-		/// completely built before playback starts.
+		///     Sequences are created paused so their timeline can be
+		///     completely built before playback starts.
 		/// </summary>
 		public static TweenSequence Sequence()
 		{
@@ -371,15 +381,6 @@ namespace UnityTemplates.Tween
 				value.w,
 				parameterName
 			);
-		}
-
-		private sealed class DelayTween : TweenCore
-		{
-			public override float Duration => 0f;
-
-			protected override void PrepareTween() { }
-
-			protected override void EvaluateTween(float normalizedPosition) { }
 		}
 	}
 }

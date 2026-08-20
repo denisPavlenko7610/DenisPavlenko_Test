@@ -19,6 +19,9 @@ namespace DenisPavlenko.Game
 			transform.position = new Vector3(0f, radius, z);
 		}
 
-		public void Hide() => gameObject.SetActive(false);
+		public void Hide()
+		{
+			gameObject.SetActive(false);
+		}
 	}
 }

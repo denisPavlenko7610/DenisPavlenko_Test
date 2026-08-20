@@ -7,9 +7,31 @@ namespace UnityTemplates.SceneFlow
 	[CreateAssetMenu(fileName = "SceneCatalog", menuName = "Unity Templates/Scene Flow/Scene Catalog")]
 	public sealed class SceneCatalog : ScriptableObject
 	{
-		[SerializeField] private List<SceneEntry> _scenes = new();
+
+		[Serializable]
+		private sealed class SceneEntry
+		{
+			[SerializeField] private string _id;
+			[SerializeField, ScenePath] private string _path;
+
+			public string Id => _id?.Trim() ?? string.Empty;
+
+			public string Path => _path?.Trim() ?? string.Empty;
+		}
+
+		[SerializeField] private List<SceneEntry> _scenes = new List<SceneEntry>();
 
 		private Dictionary<string, string> _pathById;
+
+		private void OnEnable()
+		{
+			_pathById = null;
+		}
+
+		private void OnValidate()
+		{
+			_pathById = null;
+		}
 
 		public string GetPath(string sceneId)
 		{
@@ -29,8 +51,8 @@ namespace UnityTemplates.SceneFlow
 		[ContextMenu("Validate")]
 		public void ThrowIfInvalid()
 		{
-			HashSet<string> ids = new(StringComparer.OrdinalIgnoreCase);
-			HashSet<string> paths = new(StringComparer.OrdinalIgnoreCase);
+			HashSet<string> ids = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			HashSet<string> paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 			foreach (SceneEntry scene in _scenes)
 			{
@@ -65,7 +87,10 @@ namespace UnityTemplates.SceneFlow
 		{
 			ThrowIfInvalid();
 
-			Dictionary<string, string> lookup = new(_scenes.Count, StringComparer.OrdinalIgnoreCase);
+			Dictionary<string, string> lookup = new Dictionary<string, string>(
+				_scenes.Count,
+				StringComparer.OrdinalIgnoreCase
+			);
 
 			foreach (SceneEntry scene in _scenes)
 			{
@@ -73,27 +98,6 @@ namespace UnityTemplates.SceneFlow
 			}
 
 			return lookup;
-		}
-
-		private void OnEnable()
-		{
-			_pathById = null;
-		}
-
-		private void OnValidate()
-		{
-			_pathById = null;
-		}
-
-		[Serializable]
-		private sealed class SceneEntry
-		{
-			[SerializeField] private string _id;
-			[SerializeField, ScenePath] private string _path;
-
-			public string Id => _id?.Trim() ?? string.Empty;
-
-			public string Path => _path?.Trim() ?? string.Empty;
 		}
 	}
 }

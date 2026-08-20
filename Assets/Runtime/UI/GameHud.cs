@@ -10,8 +10,6 @@ namespace DenisPavlenko.Game.UI
 		private const string ShotLabel = "SHOT  {0}";
 		private const int WholePercent = 100;
 
-		public event Action RestartRequested;
-
 		[SerializeField] private Text _playerVolumeText;
 		[SerializeField] private Text _shotVolumeText;
 		[SerializeField] private ResultPanelView _winPanel;
@@ -34,17 +32,27 @@ namespace DenisPavlenko.Game.UI
 			_losePanel.RestartRequested -= OnRestartClicked;
 		}
 
+		public event Action RestartRequested;
+
 		public void SetVolumes(float playerFraction, float shotFraction)
 		{
 			_playerVolumeText.text = string.Format(PlayerLabel, ToWholePercent(playerFraction));
 			_shotVolumeText.text = string.Format(ShotLabel, ToWholePercent(shotFraction));
 		}
 
-		public void ShowResult(bool isWin) => (isWin ? _winPanel : _losePanel).Show();
+		public void ShowResult(bool isWin)
+		{
+			(isWin ? _winPanel : _losePanel).Show();
+		}
 
-		private static int ToWholePercent(float fraction) =>
-			Mathf.Clamp(Mathf.RoundToInt(fraction * WholePercent), 0, WholePercent);
+		private void OnRestartClicked()
+		{
+			RestartRequested?.Invoke();
+		}
 
-		private void OnRestartClicked() => RestartRequested?.Invoke();
+		private static int ToWholePercent(float fraction)
+		{
+			return Mathf.Clamp(Mathf.RoundToInt(fraction * WholePercent), 0, WholePercent);
+		}
 	}
 }

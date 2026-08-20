@@ -9,10 +9,24 @@ namespace UnityTemplates.Editor.Attributes
 {
 	public abstract class ButtonEditorBase : UnityEditor.Editor
 	{
+
+		private readonly struct ButtonMethod
+		{
+			public readonly MethodInfo Method;
+			public readonly ButtonAttribute Attribute;
+
+			public ButtonMethod(MethodInfo method, ButtonAttribute attribute)
+			{
+				Method = method;
+				Attribute = attribute;
+			}
+		}
+
 		private const BindingFlags MethodFlags =
 			BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
-		private static readonly Dictionary<Type, List<ButtonMethod>> ButtonMethodsByType = new();
+		private static readonly Dictionary<Type, List<ButtonMethod>> ButtonMethodsByType =
+			new Dictionary<Type, List<ButtonMethod>>();
 
 		public override void OnInspectorGUI()
 		{
@@ -53,47 +67,6 @@ namespace UnityTemplates.Editor.Attributes
 			}
 		}
 
-		private static List<ButtonMethod> GetButtonMethods(Type targetType)
-		{
-			if (ButtonMethodsByType.TryGetValue(targetType, out List<ButtonMethod> cachedMethods))
-			{
-				return cachedMethods;
-			}
-
-			MethodInfo[] methods = targetType.GetMethods(MethodFlags);
-			List<ButtonMethod> buttonMethods = new();
-
-			for (int i = 0; i < methods.Length; i++)
-			{
-				MethodInfo method = methods[i];
-				ButtonAttribute attribute = method.GetCustomAttribute<ButtonAttribute>();
-
-				if (attribute == null)
-				{
-					continue;
-				}
-
-				buttonMethods.Add(new ButtonMethod(method, attribute));
-			}
-
-			ButtonMethodsByType.Add(targetType, buttonMethods);
-
-			return buttonMethods;
-		}
-
-		private static bool IsValidButtonMethod(MethodInfo method)
-		{
-			return method.GetParameters().Length == 0;
-		}
-
-		private static void DrawInvalidButtonWarning(MethodInfo method)
-		{
-			EditorGUILayout.HelpBox(
-				$"[Button] method '{method.Name}' must be parameterless.",
-				MessageType.Warning
-			);
-		}
-
 		private void InvokeForTargets(MethodInfo method)
 		{
 			for (int i = 0; i < targets.Length; i++)
@@ -127,21 +100,50 @@ namespace UnityTemplates.Editor.Attributes
 			}
 		}
 
+		private static List<ButtonMethod> GetButtonMethods(Type targetType)
+		{
+			if (ButtonMethodsByType.TryGetValue(targetType, out List<ButtonMethod> cachedMethods))
+			{
+				return cachedMethods;
+			}
+
+			MethodInfo[] methods = targetType.GetMethods(MethodFlags);
+			List<ButtonMethod> buttonMethods = new List<ButtonMethod>();
+
+			for (int i = 0; i < methods.Length; i++)
+			{
+				MethodInfo method = methods[i];
+				ButtonAttribute attribute = method.GetCustomAttribute<ButtonAttribute>();
+
+				if (attribute == null)
+				{
+					continue;
+				}
+
+				buttonMethods.Add(new ButtonMethod(method, attribute));
+			}
+
+			ButtonMethodsByType.Add(targetType, buttonMethods);
+
+			return buttonMethods;
+		}
+
+		private static bool IsValidButtonMethod(MethodInfo method)
+		{
+			return method.GetParameters().Length == 0;
+		}
+
+		private static void DrawInvalidButtonWarning(MethodInfo method)
+		{
+			EditorGUILayout.HelpBox(
+				$"[Button] method '{method.Name}' must be parameterless.",
+				MessageType.Warning
+			);
+		}
+
 		private static string FormatResult(object result)
 		{
 			return result == null ? "null" : result.ToString();
-		}
-
-		private readonly struct ButtonMethod
-		{
-			public readonly MethodInfo Method;
-			public readonly ButtonAttribute Attribute;
-
-			public ButtonMethod(MethodInfo method, ButtonAttribute attribute)
-			{
-				Method = method;
-				Attribute = attribute;
-			}
 		}
 	}
 }

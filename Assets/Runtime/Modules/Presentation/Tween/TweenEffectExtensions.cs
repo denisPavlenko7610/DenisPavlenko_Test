@@ -5,6 +5,292 @@ namespace UnityTemplates.Tween
 {
 	public static class TweenEffectExtensions
 	{
+
+		// ==================================================
+		// Jump implementation
+		// ==================================================
+
+		private sealed class JumpTween : TweenCore
+		{
+			private readonly Transform _transform;
+
+			private readonly Vector3 _target;
+
+			private readonly float _height;
+
+			private readonly bool _local;
+
+			private Vector3 _start;
+
+			public override float Duration { get; }
+
+			public JumpTween(Transform transform, Vector3 target, float duration, float height, bool local) : base(
+				transform
+			)
+			{
+				ValidateDuration(duration);
+
+				if (!IsFinite(height))
+				{
+					throw new ArgumentOutOfRangeException(nameof(height));
+				}
+
+				_transform = transform;
+				_target = target;
+				Duration = duration;
+				_height = height;
+				_local = local;
+			}
+
+			protected override void PrepareTween()
+			{
+				_start = _local
+					? _transform.localPosition
+					: _transform.position;
+			}
+
+			protected override void EvaluateTween(float normalizedPosition)
+			{
+				float t = Mathf.Clamp01(normalizedPosition);
+
+				Vector3 value = Vector3.LerpUnclamped(_start, _target, t);
+
+				value.y += Mathf.Sin(t * Mathf.PI) * _height;
+
+				if (_local)
+				{
+					_transform.localPosition = value;
+				}
+				else
+				{
+					_transform.position = value;
+				}
+			}
+		}
+
+		// ==================================================
+		// Punch implementation
+		// ==================================================
+
+		private sealed class PunchVector3Tween : TweenCore
+		{
+			private readonly Func<Vector3> _getter;
+
+			private readonly Action<Vector3> _setter;
+
+			private readonly Vector3 _punch;
+
+			private readonly int _vibrato;
+
+			private readonly float _elasticity;
+
+			private Vector3 _start;
+
+			public override float Duration { get; }
+
+			public PunchVector3Tween(
+				object target,
+				Func<Vector3> getter,
+				Action<Vector3> setter,
+				Vector3 punch,
+				float duration,
+				int vibrato,
+				float elasticity
+			) : base(target)
+			{
+				ValidateDuration(duration);
+				ValidateVibrato(vibrato);
+				ValidateElasticity(elasticity);
+
+				_getter = getter ?? throw new ArgumentNullException(nameof(getter));
+				_setter = setter ?? throw new ArgumentNullException(nameof(setter));
+
+				_punch = punch;
+				Duration = duration;
+				_vibrato = vibrato;
+				_elasticity = elasticity;
+			}
+
+			protected override void PrepareTween()
+			{
+				_start = _getter();
+			}
+
+			protected override void EvaluateTween(float normalizedPosition)
+			{
+				float value = EvaluatePunch(normalizedPosition, _vibrato, _elasticity);
+
+				_setter(_start + _punch * value);
+			}
+		}
+
+		private sealed class PunchRotationTween : TweenCore
+		{
+			private readonly Transform _transform;
+
+			private readonly Vector3 _punch;
+
+			private readonly int _vibrato;
+
+			private readonly float _elasticity;
+
+			private Quaternion _start;
+
+			public override float Duration { get; }
+
+			public PunchRotationTween(Transform transform, Vector3 punch, float duration, int vibrato, float elasticity)
+				: base(transform)
+			{
+				ValidateDuration(duration);
+				ValidateVibrato(vibrato);
+				ValidateElasticity(elasticity);
+
+				_transform = transform;
+				_punch = punch;
+				Duration = duration;
+				_vibrato = vibrato;
+				_elasticity = elasticity;
+			}
+
+			protected override void PrepareTween()
+			{
+				_start = _transform.localRotation;
+			}
+
+			protected override void EvaluateTween(float normalizedPosition)
+			{
+				float amount = EvaluatePunch(normalizedPosition, _vibrato, _elasticity);
+
+				Quaternion offset = Quaternion.Euler(_punch * amount);
+
+				_transform.localRotation = _start * offset;
+			}
+		}
+
+		// ==================================================
+		// Shake implementation
+		// ==================================================
+
+		private sealed class ShakeVector3Tween : TweenCore
+		{
+			private readonly Func<Vector3> _getter;
+
+			private readonly Action<Vector3> _setter;
+
+			private readonly Vector3 _strength;
+
+			private readonly Vector3[] _samples;
+
+			private Vector3 _start;
+
+			public override float Duration { get; }
+
+			public ShakeVector3Tween(
+				object target,
+				Func<Vector3> getter,
+				Action<Vector3> setter,
+				Vector3 strength,
+				float duration,
+				int vibrato,
+				float randomness,
+				int seed
+			) : base(target)
+			{
+				ValidateDuration(duration);
+				ValidateVibrato(vibrato);
+				ValidateRandomness(randomness);
+
+				_getter = getter ?? throw new ArgumentNullException(nameof(getter));
+				_setter = setter ?? throw new ArgumentNullException(nameof(setter));
+
+				_strength = strength;
+				Duration = duration;
+
+				_samples = BuildSamples(vibrato, randomness, seed);
+			}
+
+			protected override void PrepareTween()
+			{
+				_start = _getter();
+			}
+
+			protected override void EvaluateTween(float normalizedPosition)
+			{
+				float t = Mathf.Clamp01(normalizedPosition);
+
+				if (t >= 1f)
+				{
+					_setter(_start);
+					return;
+				}
+
+				Vector3 direction = EvaluateSamples(_samples, t);
+
+				float decay = 1f - t;
+
+				Vector3 offset = Vector3.Scale(direction, _strength) * decay;
+				_setter(_start + offset);
+			}
+		}
+
+		private sealed class ShakeRotationTween : TweenCore
+		{
+			private readonly Transform _transform;
+
+			private readonly Vector3 _strength;
+
+			private readonly Vector3[] _samples;
+
+			private Quaternion _start;
+
+			public override float Duration { get; }
+
+			public ShakeRotationTween(
+				Transform transform,
+				Vector3 strength,
+				float duration,
+				int vibrato,
+				float randomness,
+				int seed
+			) : base(transform)
+			{
+				ValidateDuration(duration);
+				ValidateVibrato(vibrato);
+				ValidateRandomness(randomness);
+
+				_transform = transform;
+				_strength = strength;
+				Duration = duration;
+
+				_samples = BuildSamples(vibrato, randomness, seed);
+			}
+
+			protected override void PrepareTween()
+			{
+				_start = _transform.localRotation;
+			}
+
+			protected override void EvaluateTween(float normalizedPosition)
+			{
+				float t = Mathf.Clamp01(normalizedPosition);
+
+				if (t >= 1f)
+				{
+					_transform.localRotation = _start;
+
+					return;
+				}
+
+				Vector3 direction = EvaluateSamples(_samples, t);
+
+				float decay = 1f - t;
+
+				Vector3 euler = Vector3.Scale(direction, _strength) * decay;
+
+				_transform.localRotation = _start * Quaternion.Euler(euler);
+			}
+		}
+
 		private const uint LcgMultiplier = 1664525u;
 
 		private const uint LcgIncrement = 1013904223u;
@@ -31,7 +317,7 @@ namespace UnityTemplates.Tween
 		{
 			Require(transform);
 
-			TweenCore tween = new JumpTween(transform, target, duration, height, local: false);
+			TweenCore tween = new JumpTween(transform, target, duration, height, false);
 
 			tween.Play();
 
@@ -42,7 +328,7 @@ namespace UnityTemplates.Tween
 		{
 			Require(transform);
 
-			TweenCore tween = new JumpTween(transform, target, duration, height, local: true);
+			TweenCore tween = new JumpTween(transform, target, duration, height, true);
 
 			tween.Play();
 
@@ -356,169 +642,6 @@ namespace UnityTemplates.Tween
 			return !float.IsNaN(value) && !float.IsInfinity(value);
 		}
 
-		// ==================================================
-		// Jump implementation
-		// ==================================================
-
-		private sealed class JumpTween : TweenCore
-		{
-			private readonly Transform _transform;
-
-			private readonly Vector3 _target;
-
-			private readonly float _duration;
-
-			private readonly float _height;
-
-			private readonly bool _local;
-
-			private Vector3 _start;
-
-			public JumpTween(Transform transform, Vector3 target, float duration, float height, bool local) : base(
-				transform
-			)
-			{
-				ValidateDuration(duration);
-
-				if (!IsFinite(height))
-				{
-					throw new ArgumentOutOfRangeException(nameof(height));
-				}
-
-				_transform = transform;
-				_target = target;
-				_duration = duration;
-				_height = height;
-				_local = local;
-			}
-
-			public override float Duration => _duration;
-
-			protected override void PrepareTween()
-			{
-				_start = _local
-					? _transform.localPosition
-					: _transform.position;
-			}
-
-			protected override void EvaluateTween(float normalizedPosition)
-			{
-				float t = Mathf.Clamp01(normalizedPosition);
-
-				Vector3 value = Vector3.LerpUnclamped(_start, _target, t);
-
-				value.y += Mathf.Sin(t * Mathf.PI) * _height;
-
-				if (_local)
-				{
-					_transform.localPosition = value;
-				}
-				else
-				{
-					_transform.position = value;
-				}
-			}
-		}
-
-		// ==================================================
-		// Punch implementation
-		// ==================================================
-
-		private sealed class PunchVector3Tween : TweenCore
-		{
-			private readonly Func<Vector3> _getter;
-
-			private readonly Action<Vector3> _setter;
-
-			private readonly Vector3 _punch;
-
-			private readonly int _vibrato;
-
-			private readonly float _elasticity;
-
-			private Vector3 _start;
-
-			public PunchVector3Tween(
-				object target,
-				Func<Vector3> getter,
-				Action<Vector3> setter,
-				Vector3 punch,
-				float duration,
-				int vibrato,
-				float elasticity
-			) : base(target)
-			{
-				ValidateDuration(duration);
-				ValidateVibrato(vibrato);
-				ValidateElasticity(elasticity);
-
-				_getter = getter ?? throw new ArgumentNullException(nameof(getter));
-				_setter = setter ?? throw new ArgumentNullException(nameof(setter));
-
-				_punch = punch;
-				Duration = duration;
-				_vibrato = vibrato;
-				_elasticity = elasticity;
-			}
-
-			public override float Duration { get; }
-
-			protected override void PrepareTween()
-			{
-				_start = _getter();
-			}
-
-			protected override void EvaluateTween(float normalizedPosition)
-			{
-				float value = EvaluatePunch(normalizedPosition, _vibrato, _elasticity);
-
-				_setter(_start + _punch * value);
-			}
-		}
-
-		private sealed class PunchRotationTween : TweenCore
-		{
-			private readonly Transform _transform;
-
-			private readonly Vector3 _punch;
-
-			private readonly int _vibrato;
-
-			private readonly float _elasticity;
-
-			private Quaternion _start;
-
-			public PunchRotationTween(Transform transform, Vector3 punch, float duration, int vibrato, float elasticity)
-				: base(transform)
-			{
-				ValidateDuration(duration);
-				ValidateVibrato(vibrato);
-				ValidateElasticity(elasticity);
-
-				_transform = transform;
-				_punch = punch;
-				Duration = duration;
-				_vibrato = vibrato;
-				_elasticity = elasticity;
-			}
-
-			public override float Duration { get; }
-
-			protected override void PrepareTween()
-			{
-				_start = _transform.localRotation;
-			}
-
-			protected override void EvaluateTween(float normalizedPosition)
-			{
-				float amount = EvaluatePunch(normalizedPosition, _vibrato, _elasticity);
-
-				Quaternion offset = Quaternion.Euler(_punch * amount);
-
-				_transform.localRotation = _start * offset;
-			}
-		}
-
 		private static float EvaluatePunch(float normalizedPosition, int vibrato, float elasticity)
 		{
 			float t = Mathf.Clamp01(normalizedPosition);
@@ -537,130 +660,6 @@ namespace UnityTemplates.Tween
 			float damping = Mathf.Lerp(decay * decay * decay, decay, elasticity);
 
 			return oscillation * damping;
-		}
-
-		// ==================================================
-		// Shake implementation
-		// ==================================================
-
-		private sealed class ShakeVector3Tween : TweenCore
-		{
-			private readonly Func<Vector3> _getter;
-
-			private readonly Action<Vector3> _setter;
-
-			private readonly Vector3 _strength;
-
-			private readonly Vector3[] _samples;
-
-			private Vector3 _start;
-
-			public ShakeVector3Tween(
-				object target,
-				Func<Vector3> getter,
-				Action<Vector3> setter,
-				Vector3 strength,
-				float duration,
-				int vibrato,
-				float randomness,
-				int seed
-			) : base(target)
-			{
-				ValidateDuration(duration);
-				ValidateVibrato(vibrato);
-				ValidateRandomness(randomness);
-
-				_getter = getter ?? throw new ArgumentNullException(nameof(getter));
-				_setter = setter ?? throw new ArgumentNullException(nameof(setter));
-
-				_strength = strength;
-				Duration = duration;
-
-				_samples = BuildSamples(vibrato, randomness, seed);
-			}
-
-			public override float Duration { get; }
-
-			protected override void PrepareTween()
-			{
-				_start = _getter();
-			}
-
-			protected override void EvaluateTween(float normalizedPosition)
-			{
-				float t = Mathf.Clamp01(normalizedPosition);
-
-				if (t >= 1f)
-				{
-					_setter(_start);
-					return;
-				}
-
-				Vector3 direction = EvaluateSamples(_samples, t);
-
-				float decay = 1f - t;
-
-				Vector3 offset = Vector3.Scale(direction, _strength) * decay;
-				_setter(_start + offset);
-			}
-		}
-
-		private sealed class ShakeRotationTween : TweenCore
-		{
-			private readonly Transform _transform;
-
-			private readonly Vector3 _strength;
-
-			private readonly Vector3[] _samples;
-
-			private Quaternion _start;
-
-			public ShakeRotationTween(
-				Transform transform,
-				Vector3 strength,
-				float duration,
-				int vibrato,
-				float randomness,
-				int seed
-			) : base(transform)
-			{
-				ValidateDuration(duration);
-				ValidateVibrato(vibrato);
-				ValidateRandomness(randomness);
-
-				_transform = transform;
-				_strength = strength;
-				Duration = duration;
-
-				_samples = BuildSamples(vibrato, randomness, seed);
-			}
-
-			public override float Duration { get; }
-
-			protected override void PrepareTween()
-			{
-				_start = _transform.localRotation;
-			}
-
-			protected override void EvaluateTween(float normalizedPosition)
-			{
-				float t = Mathf.Clamp01(normalizedPosition);
-
-				if (t >= 1f)
-				{
-					_transform.localRotation = _start;
-
-					return;
-				}
-
-				Vector3 direction = EvaluateSamples(_samples, t);
-
-				float decay = 1f - t;
-
-				Vector3 euler = Vector3.Scale(direction, _strength) * decay;
-
-				_transform.localRotation = _start * Quaternion.Euler(euler);
-			}
 		}
 
 		// ==================================================
@@ -760,7 +759,7 @@ namespace UnityTemplates.Tween
 		{
 			state = state * LcgMultiplier + LcgIncrement;
 
-			uint value = (state >> UpperBitsShift) & UpperBitsMask;
+			uint value = state >> UpperBitsShift & UpperBitsMask;
 
 			float normalized = value / UpperBitsScale;
 

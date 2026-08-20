@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace UnityTemplates.Editor.Attributes
 {
-	[CanEditMultipleObjects]
-	[CustomEditor(typeof(ScriptableObject), true, isFallback = true)]
+	[CanEditMultipleObjects, CustomEditor(typeof(ScriptableObject), true, isFallback = true)]
 	public sealed class ButtonScriptableObjectEditor : ButtonEditorBase { }
 }

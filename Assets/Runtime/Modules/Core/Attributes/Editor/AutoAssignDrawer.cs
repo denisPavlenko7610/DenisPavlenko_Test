@@ -25,13 +25,13 @@ namespace UnityTemplates.Editor.Attributes
 
 		private void TryAssign(SerializedProperty property)
 		{
-			if (Event.current?.type != EventType.Layout
-				|| property.propertyType != SerializedPropertyType.ObjectReference
-				|| property.objectReferenceValue != null
-				|| property.serializedObject.isEditingMultipleObjects
-				|| property.serializedObject.targetObject is not Component source
-				|| fieldInfo == null
-				|| !typeof(Component).IsAssignableFrom(fieldInfo.FieldType))
+			if (Event.current?.type != EventType.Layout ||
+				property.propertyType != SerializedPropertyType.ObjectReference ||
+				property.objectReferenceValue != null ||
+				property.serializedObject.isEditingMultipleObjects ||
+				property.serializedObject.targetObject is not Component source ||
+				fieldInfo == null ||
+				!typeof(Component).IsAssignableFrom(fieldInfo.FieldType))
 			{
 				return;
 			}

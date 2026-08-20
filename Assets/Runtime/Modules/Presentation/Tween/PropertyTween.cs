@@ -10,8 +10,6 @@ namespace UnityTemplates.Tween
 
 		private readonly T _targetValue;
 
-		private readonly float _duration;
-
 		private readonly Func<T, T, float, T> _interpolate;
 
 		private readonly Func<T, T, T> _add;
@@ -27,6 +25,8 @@ namespace UnityTemplates.Tween
 		private T _start;
 
 		private T _end;
+
+		public override float Duration { get; }
 
 		internal PropertyTween(
 			object target,
@@ -47,13 +47,11 @@ namespace UnityTemplates.Tween
 			_setter = setter ?? throw new ArgumentNullException(nameof(setter));
 
 			_targetValue = targetValue;
-			_duration = duration;
+			Duration = duration;
 
 			_interpolate = interpolate ?? throw new ArgumentNullException(nameof(interpolate));
 			_add = add;
 		}
-
-		public override float Duration => _duration;
 
 		public PropertyTween<T> SetEase(EaseType ease)
 		{

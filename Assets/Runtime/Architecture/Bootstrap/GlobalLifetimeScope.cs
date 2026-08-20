@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityTemplates.SceneFlow;
 using VContainer;
@@ -19,7 +20,7 @@ namespace DenisPavlenko.Project.Architecture
 		{
 			if (_sceneCatalog == null)
 			{
-				throw new System.InvalidOperationException("Scene catalog is required by the global lifetime scope.");
+				throw new InvalidOperationException("Scene catalog is required by the global lifetime scope.");
 			}
 
 			builder.RegisterInstance(_sceneCatalog);

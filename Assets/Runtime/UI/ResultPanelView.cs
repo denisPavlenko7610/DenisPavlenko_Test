@@ -7,7 +7,6 @@ namespace DenisPavlenko.Game.UI
 {
 	public sealed class ResultPanelView : MonoBehaviour
 	{
-		public event Action RestartRequested;
 
 		[SerializeField] private Button _restartButton;
 		[SerializeField, Min(0.01f)] private float _showDuration = 0.28f;
@@ -22,6 +21,8 @@ namespace DenisPavlenko.Game.UI
 			_restartButton.onClick.RemoveListener(OnRestartClicked);
 		}
 
+		public event Action RestartRequested;
+
 		public void Show()
 		{
 			gameObject.SetActive(true);
@@ -29,6 +30,9 @@ namespace DenisPavlenko.Game.UI
 			transform.ScaleTo(Vector3.one, _showDuration).SetEase(EaseType.OutBack);
 		}
 
-		private void OnRestartClicked() => RestartRequested?.Invoke();
+		private void OnRestartClicked()
+		{
+			RestartRequested?.Invoke();
+		}
 	}
 }

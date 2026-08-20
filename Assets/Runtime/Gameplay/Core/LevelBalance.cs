@@ -1,9 +1,13 @@
 using System;
+using System.Collections.Generic;
 
 namespace DenisPavlenko.Game.Core
 {
 	public sealed class LevelBalance
 	{
+		private const int MaxBalanceAttempts = 64;
+		private const float VolumeGrowth = 1.1f;
+
 		private readonly GameConfig _config;
 
 		public LevelBalance(GameConfig config)
@@ -18,43 +22,89 @@ namespace DenisPavlenko.Game.Core
 				throw new ArgumentNullException(nameof(layout));
 			}
 
-			// every obstacle needs a shot of radius obstacleRadius / blastMultiplier,
-			// and such a shot costs shot^3 of ball volume.
-			float totalShotVolume = TotalShotVolume(layout, out float largestShotRadius);
-			largestShotRadius = Math.Max(largestShotRadius, _config.MinShotRadius);
+			float startVolume = EstimateRequiredVolume(layout);
 
-			float startVolume = Math.Max(
-				VolumeWithReserve(totalShotVolume),
-				MinimumStartVolumeForLargestShot(largestShotRadius)
-			);
-
-			return VolumeMath.CubeRoot(startVolume);
-		}
-
-		private float TotalShotVolume(LevelLayout layout, out float largestShotRadius)
-		{
-			float total = 0f;
-			largestShotRadius = 0f;
-
-			foreach (Obstacle obstacle in layout.Obstacles)
+			for (int attempt = 0; attempt < MaxBalanceAttempts; attempt++)
 			{
-				float shotRadius = RequiredShotRadius(obstacle);
-				total += VolumeMath.Cube(shotRadius);
-				largestShotRadius = Math.Max(largestShotRadius, shotRadius);
+				if (CanClearRoute(layout, startVolume))
+				{
+					return VolumeMath.CubeRoot(startVolume);
+				}
+
+				startVolume *= VolumeGrowth;
 			}
 
-			return total;
+			throw new InvalidOperationException("Could not balance the current level layout.");
 		}
 
-		private float RequiredShotRadius(Obstacle obstacle) =>
-			obstacle.BoundingRadius / _config.BlastRadiusMultiplier;
+		private float EstimateRequiredVolume(LevelLayout layout)
+		{
+			float volume = VolumeMath.Cube(_config.MinShotRadius);
+			foreach (Obstacle obstacle in layout.Obstacles)
+			{
+				float shotRadius = Math.Max(
+					_config.MinShotRadius,
+					obstacle.FootprintRadius / _config.BlastRadiusMultiplier
+				);
+				volume += VolumeMath.Cube(shotRadius);
+			}
 
-		// Level cost plus 20% reserve.
-		private float VolumeWithReserve(float totalShotVolume) =>
-			totalShotVolume * _config.SafetyMargin;
+			return volume / (1f - _config.CriticalVolumeFraction);
+		}
 
-		// Start volume that still lets the ball charge the biggest shot without hitting the critical size.
-		private float MinimumStartVolumeForLargestShot(float largestShotRadius) =>
-			VolumeMath.Cube(largestShotRadius) / (1f - _config.CriticalVolumeFraction);
+		private bool CanClearRoute(LevelLayout source, float startVolume)
+		{
+			LevelLayout layout = new LevelLayout(source.Obstacles, source.TargetZ);
+			float remainingVolume = startVolume;
+			float reserveVolume = startVolume * _config.CriticalVolumeFraction;
+
+			for (int shot = 0; shot < layout.Obstacles.Count; shot++)
+			{
+				float playerRadius = VolumeMath.CubeRoot(remainingVolume);
+				if (layout.FindNextBlockingObstacle(
+						0f,
+						playerRadius + _config.ObstacleClearance
+					) == null)
+				{
+					return true;
+				}
+
+				float shotRadius = SmallestShotRadius(layout.Obstacles);
+				float shotVolume = VolumeMath.Cube(shotRadius);
+				if (remainingVolume - shotVolume < reserveVolume)
+				{
+					return false;
+				}
+
+				Obstacle hit = layout.FindNextBlockingObstacle(0f, shotRadius);
+				if (hit == null)
+				{
+					return false;
+				}
+
+				remainingVolume -= shotVolume;
+				layout.RemoveObstacle(hit.Id);
+				foreach (Obstacle obstacle in layout.ObstaclesInRadius(
+					hit.PositionZ,
+					shotRadius * _config.BlastRadiusMultiplier
+				))
+				{
+					layout.RemoveObstacle(obstacle.Id);
+				}
+			}
+
+			return false;
+		}
+
+		private float SmallestShotRadius(IEnumerable<Obstacle> obstacles)
+		{
+			float closestDistance = float.MaxValue;
+			foreach (Obstacle obstacle in obstacles)
+			{
+				closestDistance = Math.Min(closestDistance, obstacle.DistanceToCenterLine);
+			}
+
+			return Math.Max(_config.MinShotRadius, closestDistance);
+		}
 	}
 }

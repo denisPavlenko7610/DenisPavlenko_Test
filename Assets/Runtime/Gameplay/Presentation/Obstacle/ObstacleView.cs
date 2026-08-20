@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityTemplates.Attributes;
 using UnityTemplates.Tween;
@@ -6,13 +7,10 @@ namespace DenisPavlenko.Game
 {
 	public sealed class ObstacleView : MonoBehaviour
 	{
-		private const float DefaultAnimationDuration = 0.2f;
-		private static readonly Color DefaultInfectedColor = new(1f, 0.35f, 0.08f);
+		private static readonly int TintPropertyId = Shader.PropertyToID("_BaseColor");
 
 		[SerializeField, Assign(AssignMode.Children)] private Renderer _renderer;
 		[SerializeField] private ObstacleVisualConfig _config;
-
-		private static readonly int TintPropertyId = Shader.PropertyToID("_BaseColor");
 
 		private MaterialPropertyBlock _propertyBlock;
 		private Color _infectedColor;
@@ -20,19 +18,19 @@ namespace DenisPavlenko.Game
 		private Color _tint = Color.white;
 		private bool _exploding;
 
-		public float PositionZ => transform.position.z;
-		public float CenterX => transform.position.x;
-		public float HalfWidth => transform.localScale.x * 0.5f;
-		public float HalfDepth => transform.localScale.z * 0.5f;
+		public float PositionZ => _renderer.bounds.center.z;
+		public float CenterX => _renderer.bounds.center.x;
+		public float HalfWidth => _renderer.bounds.extents.x;
+		public float HalfDepth => _renderer.bounds.extents.z;
 
 		private void Awake()
 		{
 			_propertyBlock = new MaterialPropertyBlock();
-			_infectedColor = _config != null ? _config.InfectedColor : DefaultInfectedColor;
-			_animationDuration = _config != null ? _config.AnimationDuration : DefaultAnimationDuration;
+			_infectedColor = _config.InfectedColor;
+			_animationDuration = _config.AnimationDuration;
 		}
 
-		public void Explode(float delay)
+		public void Explode(float delay, Action onComplete)
 		{
 			if (_exploding)
 			{
@@ -40,17 +38,23 @@ namespace DenisPavlenko.Game
 			}
 
 			_exploding = true;
-			Tween.DelayedCall(delay, PlayExplosion);
+			Tween.DelayedCall(delay, () => PlayExplosion(onComplete));
 		}
 
-		private void PlayExplosion()
+		private void PlayExplosion(Action onComplete)
 		{
 			Tween.To(this, () => _tint, ApplyTint, _infectedColor, _animationDuration)
 				.SetEase(EaseType.OutQuad);
 
 			transform.ScaleTo(Vector3.zero, _animationDuration)
 				.SetEase(EaseType.InBack)
-				.OnComplete(() => gameObject.SetActive(false));
+				.OnComplete(() => CompleteExplosion(onComplete));
+		}
+
+		private void CompleteExplosion(Action onComplete)
+		{
+			gameObject.SetActive(false);
+			onComplete?.Invoke();
 		}
 
 		private void ApplyTint(Color tint)

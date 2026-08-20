@@ -135,7 +135,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec40d85a1cfd7774e94fbc2356e46c05, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DenisPavlenko.Game.PlayerBallView
-  _hopHeight: 0.6
-  _hopFrequency: 14
-  _pulseScale: 0.28
+  _advanceHopHeight: 0.6
+  _advanceHopCyclesPerSecond: 14
+  _pulseScale: 1.08
   _pulseDuration: 0.18

@@ -9,10 +9,6 @@ namespace UnityTemplates.Tween
 	{
 		private static TweenManager _instance;
 
-		private readonly List<TweenCore> _active = new();
-
-		private TweenRunner _runner;
-
 		internal static TweenManager Instance
 		{
 			get
@@ -23,15 +19,13 @@ namespace UnityTemplates.Tween
 			}
 		}
 
+		private readonly List<TweenCore> _active = new List<TweenCore>();
+
+		private TweenRunner _runner;
+
 		private TweenManager()
 		{
 			EnsureRunner();
-		}
-
-		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-		private static void ResetStatics()
-		{
-			_instance = null;
 		}
 
 		internal void Register(TweenCore tween)
@@ -106,30 +100,6 @@ namespace UnityTemplates.Tween
 		internal int KillAll(bool complete)
 		{
 			return KillMatching(complete, tween => true);
-		}
-
-		private int KillMatching(bool complete, Func<TweenCore, bool> match)
-		{
-			int count = 0;
-
-			for (int index = _active.Count - 1; index >= 0; index--)
-			{
-				TweenCore tween = _active[index];
-
-				if (tween == null
-					|| tween.IsKilled
-					|| tween.IsSequenceOwned
-					|| !match(tween))
-				{
-					continue;
-				}
-
-				tween.Kill(complete);
-
-				count++;
-			}
-
-			return count;
 		}
 
 		internal int PauseAll()
@@ -232,6 +202,27 @@ namespace UnityTemplates.Tween
 			return count;
 		}
 
+		private int KillMatching(bool complete, Func<TweenCore, bool> match)
+		{
+			int count = 0;
+
+			for (int index = _active.Count - 1; index >= 0; index--)
+			{
+				TweenCore tween = _active[index];
+
+				if (tween == null || tween.IsKilled || tween.IsSequenceOwned || !match(tween))
+				{
+					continue;
+				}
+
+				tween.Kill(complete);
+
+				count++;
+			}
+
+			return count;
+		}
+
 		private void EnsureRunner()
 		{
 			if (_runner != null)
@@ -263,6 +254,12 @@ namespace UnityTemplates.Tween
 
 			_runner.Initialize(this);
 		}
+
+		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+		private static void ResetStatics()
+		{
+			_instance = null;
+		}
 	}
 
 	[DisallowMultipleComponent]
@@ -270,19 +267,9 @@ namespace UnityTemplates.Tween
 	{
 		private TweenManager _manager;
 
-		internal void Initialize(TweenManager manager)
-		{
-			_manager = manager;
-		}
-
 		private void Update()
 		{
 			_manager?.Update(TweenUpdateType.Normal, Time.deltaTime, Time.unscaledDeltaTime);
-		}
-
-		private void LateUpdate()
-		{
-			_manager?.Update(TweenUpdateType.Late, Time.deltaTime, Time.unscaledDeltaTime);
 		}
 
 		private void FixedUpdate()
@@ -290,9 +277,19 @@ namespace UnityTemplates.Tween
 			_manager?.Update(TweenUpdateType.Fixed, Time.fixedDeltaTime, Time.fixedUnscaledDeltaTime);
 		}
 
+		private void LateUpdate()
+		{
+			_manager?.Update(TweenUpdateType.Late, Time.deltaTime, Time.unscaledDeltaTime);
+		}
+
 		private void OnDestroy()
 		{
 			_manager = null;
+		}
+
+		internal void Initialize(TweenManager manager)
+		{
+			_manager = manager;
 		}
 	}
 }
